@@ -21,6 +21,7 @@ void insert_sorted_topk(std::vector<SearchResult> &out,
     if (out.size() < k) {
         out.push_back(candidate);
 
+        // to do - use max heap
         std::size_t last = out.size() - 1;
         std::size_t pos = last - 1;
         while (pos > 0 && out[pos].score > out[last].score) {

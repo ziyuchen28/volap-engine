@@ -76,6 +76,22 @@ target_link_libraries(vecstore_flat PUBLIC
 
 
 
+# storage 
+add_library(vecstore_storage STATIC
+    src/storage/dense_vector_store.cpp
+    src/storage/metadata_store.cpp
+)
+add_library(vecstore::storage ALIAS vecstore_storage)
+
+target_include_directories(vecstore_storage PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_compile_features(vecstore_storage PUBLIC cxx_std_20)
+target_compile_options(vecstore_storage PRIVATE -Wall -Wextra -Wpedantic -O2)
+
+
+
 # tests 
 enable_testing()
 
@@ -97,19 +113,47 @@ target_link_libraries(test_search_flat PRIVATE
 add_test(NAME vecstore_test_search_flat COMMAND test_search_flat)
 
 
+add_executable(test_dense_vector_store
+    tests/test_dense_vector_store.cpp
+)
+target_link_libraries(test_dense_vector_store PRIVATE 
+    vecstore::storage
+    vecstore::flat
+)
+add_test(NAME vecstore_test_dense_vector_store COMMAND test_dense_vector_store)
+
+
+
+add_executable(test_metadata_store
+    tests/test_metadata_store.cpp
+)
+target_link_libraries(test_metadata_store PRIVATE 
+    vecstore::storage
+    vecstore::flat
+)
+add_test(NAME vecstore_test_metadata_store COMMAND test_metadata_store)
+
+
 # benchmark
 if (VECSTORE_BUILD_BENCH)
 
     add_executable(bench_dot
         bench/bench_dot.cpp
     )
-    target_link_libraries(bench_dot PRIVATE vecstore::vecmath)
-
+    target_link_libraries(bench_dot 
+        PRIVATE 
+        vecstore::vecmath
+    )
 
     add_executable(bench_search_flat
         bench/bench_search_flat.cpp
     )
-    target_link_libraries(bench_search_flat PRIVATE vecstore::flat)
+    target_link_libraries(bench_search_flat 
+        PRIVATE 
+        vecstore::flat
+        vecstore::vecmath
+        vecstore::storage
+    )
 
 endif()
 
