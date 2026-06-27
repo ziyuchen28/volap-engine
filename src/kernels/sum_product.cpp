@@ -1,5 +1,6 @@
 
 #include <volap/kernels/sum_product.h>
+#include <iostream>
 
 
 namespace volap::kernels {
@@ -17,6 +18,7 @@ static KernelImpl detect_real_optimal_sum_product_f32_impl() noexcept
 #if VOLAP_X86_RUNTIME_DETECT && defined(VOLAP_BUILD_X86_AVX2_FMA) && (defined(__GNUC__) || defined(__clang__))
     __builtin_cpu_init();
     if (__builtin_cpu_supports("avx2") && __builtin_cpu_supports("fma")) {
+        std::cout << "av2 + fma" << std::endl;
         return KernelImpl::Avx2Fma;
     }
 #endif

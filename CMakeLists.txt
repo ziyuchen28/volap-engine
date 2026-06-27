@@ -35,23 +35,23 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 
-# if (VOLAP_X86_FAMILY)
-#     target_sources(volap_kernels PRIVATE
-#         src/kernels/sum_product_x86_avx2_fma.cpp
-#     )
-#
-#     target_compile_definitions(volap_kernels PRIVATE
-#         VOLAP_BUILD_X86_AVX2_FMA=1
-#     )
-#
-#     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-#         set_source_files_properties(
-#             src/kernels/sum_product_x86_avx2_fma.cpp
-#             PROPERTIES
-#             COMPILE_OPTIONS "-mavx2;-mfma"
-#         )
-#     endif()
-# endif()
+if (VOLAP_X86_FAMILY)
+    target_sources(volap_kernels PRIVATE
+        src/kernels/sum_product_x86_avx2_fma.cpp
+    )
+
+    target_compile_definitions(volap_kernels PRIVATE
+        VOLAP_BUILD_X86_AVX2_FMA=1
+    )
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        set_source_files_properties(
+            src/kernels/sum_product_x86_avx2_fma.cpp
+            PROPERTIES
+            COMPILE_OPTIONS "-mavx2;-mfma"
+        )
+    endif()
+endif()
 
 
 if(PROJECT_IS_TOP_LEVEL)
