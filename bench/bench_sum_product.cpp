@@ -50,6 +50,23 @@ KernelImpl parse_impl(const std::string &s)
     throw std::runtime_error("unknown --impl value: " + s);
 }
 
+template <typename T>
+#if defined(__GNUC__) || defined(__clang__)
+inline void do_not_optimize(const T &value)
+{
+    // Prevent dead code elim on value while not adding extra memory writes
+    // compared to volatile T sink = value 
+    // "memory" to prevent re-ordering code happens before or after
+    __asm__ __volatile__("" : : "g"(value) : "memory");
+}
+#else
+inline void do_not_optimize(const T &value)
+{
+    static volatile T sink;
+    sink = value;
+}
+#endif
+
 void bench_sum_product_f32(
     std::size_t rows,
     std::size_t iters,
@@ -59,15 +76,15 @@ void bench_sum_product_f32(
     const float *b)
 {
     const auto requested_impl = parse_impl(impl_name);
-    volatile float result_sink = 0.0f;
     for (std::size_t i = 0; i < warmup; ++i) {
-        const float result_sink = sum_product_f32(a, b, rows, requested_impl);
+        const float result = sum_product_f32(a, b, rows, requested_impl);
+        do_not_optimize(result);
     }
 
     const auto t0 = std::chrono::steady_clock::now();
     for (std::size_t i = 0; i < iters; ++i) {
-        const float result_sink = sum_product_f32(a, b, rows, requested_impl);
-
+        const float result = sum_product_f32(a, b, rows, requested_impl);
+        do_not_optimize(result);
     }
     const auto t1 = std::chrono::steady_clock::now();
 
@@ -81,6 +98,7 @@ void bench_sum_product_f32(
     std::cout << "seconds=" << seconds << "\n";
     std::cout << "ns_per_iter=" << ns_per_iter << "\n";
 }
+
 
 
 int main(int argc, char **argv)

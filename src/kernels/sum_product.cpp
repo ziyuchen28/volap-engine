@@ -14,7 +14,7 @@ namespace volap::kernels {
 
 static KernelImpl detect_real_optimal_sum_product_f32_impl() noexcept
 {
-// guard with runtime check to ensure target machine is x86   
+// Guard with runtime check to ensure target machine is x86   
 #if VOLAP_X86_RUNTIME_DETECT && defined(VOLAP_BUILD_X86_AVX2_FMA) && (defined(__GNUC__) || defined(__clang__))
     __builtin_cpu_init();
     if (__builtin_cpu_supports("avx2") && __builtin_cpu_supports("fma")) {
