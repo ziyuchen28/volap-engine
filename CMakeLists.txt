@@ -75,6 +75,14 @@ endif()
 
 # benchmark
 if (VOLAP_BUILD_BENCH)
+  add_executable(bench_sum_product
+    bench/bench_sum_product.cpp
+  )
+
+  target_link_libraries(bench_sum_product
+    PRIVATE
+      volap::kernels
+  )
 endif()
 
 

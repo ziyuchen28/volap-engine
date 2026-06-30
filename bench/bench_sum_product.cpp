@@ -1,0 +1,124 @@
+
+#include <volap/kernels/sum_product.h>
+
+#include <stdexcept>
+#include <random>
+#include <chrono>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <cmath>
+#include <cstdlib>
+
+using namespace volap::kernels;
+
+
+std::string get_arg(int argc, char **argv, const std::string &key, const std::string &def)
+{
+    for (int i = 1; i + 1 < argc; ++i) {
+        if (argv[i] == key) {
+            return argv[i + 1];
+        }
+    }
+    return def;
+}
+
+std::size_t parse_size_arg(int argc, char **argv, const std::string &key, const std::string &def)
+{
+    const std::string value = get_arg(argc, argv, key, def);
+    try {
+        return static_cast<std::size_t>(std::stoull(value));
+    } catch (const std::exception&) {
+        throw std::runtime_error("invalid numeric argument for " + key + ": " + value);
+    }
+}
+
+KernelImpl parse_impl(const std::string &s)
+{
+    if (s == "scalar") {
+        return KernelImpl::Scalar;
+    }
+
+    if (s == "avx2" || s == "avx2_fma") {
+        return KernelImpl::Avx2Fma;
+    }
+
+    if (s == "auto") {
+        return KernelImpl::Auto;
+    }
+
+    throw std::runtime_error("unknown --impl value: " + s);
+}
+
+void bench_sum_product_f32(
+    std::size_t rows,
+    std::size_t iters,
+    std::size_t warmup,
+    const std::string &impl_name,
+    const float *a,
+    const float *b)
+{
+    const auto requested_impl = parse_impl(impl_name);
+    volatile float result_sink = 0.0f;
+    for (std::size_t i = 0; i < warmup; ++i) {
+        const float result_sink = sum_product_f32(a, b, rows, requested_impl);
+    }
+
+    const auto t0 = std::chrono::steady_clock::now();
+    for (std::size_t i = 0; i < iters; ++i) {
+        const float result_sink = sum_product_f32(a, b, rows, requested_impl);
+
+    }
+    const auto t1 = std::chrono::steady_clock::now();
+
+    const double seconds = std::chrono::duration<double>(t1 - t0).count();
+    const double ns_per_iter = seconds * 1e9 / static_cast<double>(iters);
+
+    std::cout << "benchmark=sum_product_f32\n";
+    std::cout << "rows=" << rows << "\n";
+    std::cout << "iters=" << iters << "\n";
+    std::cout << "warmup=" << warmup << "\n";
+    std::cout << "seconds=" << seconds << "\n";
+    std::cout << "ns_per_iter=" << ns_per_iter << "\n";
+}
+
+
+int main(int argc, char **argv)
+{
+    const std::size_t rows = parse_size_arg(argc, argv, "--rows", "1048576");
+    const std::size_t iters = parse_size_arg(argc, argv, "--iters", "1000");
+    const std::size_t warmup = parse_size_arg(argc, argv, "--warmup", "20");
+
+
+    if (rows == 0) {
+        std::cerr << "--rows must be > 0\n";
+        return 1;
+    }
+
+    if (iters == 0) {
+        std::cerr << "--iters must be > 0\n";
+        return 1;
+    }
+
+    std::mt19937 rng(42);
+    // Scale to prevent floating point precision loss.
+    std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+
+    std::vector<float> a(rows);
+    std::vector<float> b(rows);
+
+    for (std::size_t i = 0; i < rows; ++i) {
+        a[i] = dist(rng);
+        b[i] = dist(rng);
+    }
+
+
+    std::cout << "requested_impl=scalar\n";
+    bench_sum_product_f32(rows, iters, warmup, "scalar", a.data(), b.data());
+
+    std::cout << "requested_impl=avx2_fma\n";
+    bench_sum_product_f32(rows, iters, warmup, "avx2_fma", a.data(), b.data());
+
+    return 0;
+}
+

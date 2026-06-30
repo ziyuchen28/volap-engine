@@ -20,12 +20,13 @@ test: build
 test-verbose: build
 	ctest --test-dir $(BUILD_DIR) --output-on-failure -V
 
-# bench-dot: build
-# 	./$(BUILD_DIR)/bench_dot --dim 1536 --iters 10000000 --warmup 10000 --impl $(KERNEL_IMPL)
 
-# bench-search-flat: build
-# 	./$(BUILD_DIR)/bench_search_flat --count 20000 --dim 1536 --k 10 --iters 100 --warmup 3 --impl $(DOT_IMPL)
+ROWS ?= 1048576
+ITERS ?= 1000
+WARMUP ?= 20
 
+bench-sum-product: build
+	./$(BUILD_DIR)/bench_sum_product --rows $(ROWS) --iters $(ITERS) --warmup $(WARMUP)
 
 clean:
 	rm -rf $(BUILD_DIR)
