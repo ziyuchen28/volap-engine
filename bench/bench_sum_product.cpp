@@ -12,6 +12,7 @@
 
 using namespace volap::kernels;
 
+namespace {
 
 std::string get_arg(int argc, char **argv, const std::string &key, const std::string &def)
 {
@@ -67,6 +68,7 @@ inline void do_not_optimize(const T &value)
 }
 #endif
 
+
 void bench_sum_product_f32(
     std::size_t rows,
     std::size_t iters,
@@ -81,15 +83,21 @@ void bench_sum_product_f32(
         do_not_optimize(result);
     }
 
+    double checksum = 0.0;
     const auto t0 = std::chrono::steady_clock::now();
     for (std::size_t i = 0; i < iters; ++i) {
         const float result = sum_product_f32(a, b, rows, requested_impl);
         do_not_optimize(result);
+        checksum += result;
     }
     const auto t1 = std::chrono::steady_clock::now();
 
     const double seconds = std::chrono::duration<double>(t1 - t0).count();
     const double ns_per_iter = seconds * 1e9 / static_cast<double>(iters);
+    // Two input float columns are streamed. The output is one scalar aggregate.
+    const double bytes_per_iter = static_cast<double>(2 * rows * sizeof(float));
+    const double effective_gb_per_sec =
+        (bytes_per_iter * static_cast<double>(iters)) / seconds / 1e9;
 
     std::cout << "benchmark=sum_product_f32\n";
     std::cout << "rows=" << rows << "\n";
@@ -97,9 +105,11 @@ void bench_sum_product_f32(
     std::cout << "warmup=" << warmup << "\n";
     std::cout << "seconds=" << seconds << "\n";
     std::cout << "ns_per_iter=" << ns_per_iter << "\n";
+    std::cout << "effective_gb_per_sec=" << effective_gb_per_sec << "\n";
+    std::cout << "checksum=" << checksum << "\n";
 }
 
-
+}  //  namespace
 
 int main(int argc, char **argv)
 {
@@ -131,10 +141,11 @@ int main(int argc, char **argv)
     }
 
 
-    std::cout << "requested_impl=scalar\n";
+
+    std::cout << "scalar\n";
     bench_sum_product_f32(rows, iters, warmup, "scalar", a.data(), b.data());
 
-    std::cout << "requested_impl=avx2_fma\n";
+    std::cout << "avx2_fma\n";
     bench_sum_product_f32(rows, iters, warmup, "avx2_fma", a.data(), b.data());
 
     return 0;
