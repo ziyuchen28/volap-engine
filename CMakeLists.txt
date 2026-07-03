@@ -65,11 +65,19 @@ endif()
 # tests 
 if(VOLAP_BUILD_TESTS)
   enable_testing()
+
   add_executable(test_sum_product tests/test_sum_product.cpp)
   target_link_libraries(test_sum_product PRIVATE 
     volap::kernels
   )
   add_test(NAME volap_test_sum_product COMMAND test_sum_product)
+
+  add_executable(test_data_chunk tests/test_data_chunk.cpp)
+  target_link_libraries(test_data_chunk PRIVATE 
+    volap::kernels
+  )
+  add_test(NAME volap_test_data_chunk COMMAND test_data_chunk)
+
 endif()
 
 

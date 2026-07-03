@@ -7,7 +7,9 @@
 
 namespace volap::core {
 
-// This represent a view over contiguous column data
+// This represent a view over contiguous column data.
+// Effectively type erasured std::span,
+// This allows engine pass around columes generically.
 class ColumnView 
 {
 public:
@@ -22,6 +24,11 @@ public:
             throw std::invalid_argument("ColumnView: non-empty column has null data");
         }
     }
+
+    template <typename T>
+    ColumnView(const T *data, std::size_t row_count)
+        : ColumnView(type_v<T>, data, row_count)
+    {}
 
     Type type() const noexcept
     {
