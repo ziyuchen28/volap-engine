@@ -4,12 +4,12 @@
 
 #include <cstddef>
 #include <stdexcept>
+#include <span>
 
 namespace volap::core {
 
-// This represent a view over contiguous column data.
-// Effectively type erasured std::span,
-// This allows engine pass around columes generically.
+// Type erased view over contiguous column data, effectively type erased std::span,
+// this allows engine pass around columes generically.
 class ColumnView 
 {
 public:
@@ -44,10 +44,27 @@ public:
     {
         return row_count_;
     }
+    
+    std::size_t byte_size() const noexcept
+    {
+        return row_count_ * type_size(type_);
+    }
 
     bool empty() const noexcept
     {
         return row_count_ == 0;
+    }
+
+
+    template <typename T>
+    // const T: Returning a read-only span
+    std::span<const T> as_span() const
+    {
+        using STORED_TYPE = std::remove_cv_t<T>;
+        if (type_ != type_v<STORED_TYPE>) {
+            throw std::logic_error("ColumnView::as_span: type mismatch");
+        }
+        return std::span<const T>(static_cast<const T*>(data_), row_count_);
     }
 
 
