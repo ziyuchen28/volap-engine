@@ -2,6 +2,7 @@
 #include "volap/core/type.h"
 #include "volap/core/column_view.h"
 #include "volap/core/data_chunk.h"
+#include "volap/core/selection_vector.h"
 
 #include <iostream>
 #include <vector>
@@ -10,9 +11,11 @@
 namespace {
 
 using namespace volap::core;
+
+using volap::core::Type;
 using volap::core::ColumnView;
 using volap::core::DataChunk;
-using volap::core::Type;
+using volap::core::SelectionVector;
 
 void check(bool condition, const char *message)
 {
@@ -139,6 +142,41 @@ void test_data_chunk_empty()
     check(chunk.empty(), "DataChunk empty");
 }
 
+void test_selection_vector()
+{
+    SelectionVector sel;
+
+    sel.reserve(4);
+    sel.push_back(3);
+    sel.push_back(7);
+    sel.push_back(11);
+
+    check(sel.size() == 3, "SelectionVector size");
+    check(sel[0] == 3, "SelectionVector index 0");
+    check(sel[1] == 7, "SelectionVector index 1");
+    check(sel[2] == 11, "SelectionVector index 2");
+
+    auto span = sel.as_span();
+    check(span.size() == 3, "SelectionVector span size");
+    check(span[2] == 11, "SelectionVector span value");
+
+    sel.clear();
+    check(sel.empty(), "SelectionVector clear");
+}
+
+void test_selection_vector_overflow_throws()
+{
+    SelectionVector sel;
+
+    bool threw = false;
+    try {
+        sel.push_back(static_cast<std::size_t>(U32_MAX) + 1);
+    } catch (const std::out_of_range&) {
+        threw = true;
+    }
+    check(threw, "SelectionVector add out of range");
+}
+
 
 } // namespace
 
@@ -153,6 +191,8 @@ int main()
     test_column_view_empty_null();
     test_data_chunk_same_length_columns();
     test_data_chunk_mismatched_lengths_throw();
+    test_selection_vector();
+    test_selection_vector_overflow_throws();
     std::cout << "test_data_chunk: PASS\n";
     return 0;
 }
