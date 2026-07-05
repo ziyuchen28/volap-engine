@@ -20,6 +20,7 @@ inline constexpr std::size_t type_size(Type type) noexcept
     switch (type) 
     {
         case Type::Bool8:
+            // vector of std::bool won't work due to compression
             return sizeof(std::uint8_t);
         case Type::Int64:
             return sizeof(std::int64_t);

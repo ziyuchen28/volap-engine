@@ -20,7 +20,7 @@ public:
         }
     }
 
-    explicit DataChunk(std::vector<ColumnView> columns)
+    DataChunk(std::vector<ColumnView> columns)
     {
         for (const ColumnView &column : columns) {
             add_column(column);
@@ -32,6 +32,7 @@ public:
         if (columns_.empty()) {
             row_count_ = column.row_count();
         } else if (column.row_count() != row_count_) {
+            // One chunk is a stripe across a portion of a table 
             throw std::invalid_argument("DataChunk: column row count mismatch");
         }
 

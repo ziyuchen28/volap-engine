@@ -1,6 +1,7 @@
 
 #include "volap/core/type.h"
 #include "volap/core/column_view.h"
+#include "volap/core/data_chunk.h"
 
 #include <iostream>
 #include <vector>
@@ -10,6 +11,7 @@ namespace {
 
 using namespace volap::core;
 using volap::core::ColumnView;
+using volap::core::DataChunk;
 using volap::core::Type;
 
 void check(bool condition, const char *message)
@@ -40,9 +42,9 @@ void test_column_view_int64()
 
     auto span = column.as_span<std::int64_t>();
     check(span.size() == 6, "ColumnView int64 span size");
-    check(span[0] == 10, "ColumnView int64 value 0");
-    check(span[1] == 20, "ColumnView int64 value 1");
-    check(span[2] == 30, "ColumnView int64 value 2");
+    check(span[0] == 10, "ColumnView int64 value at index 0");
+    check(span[1] == 20, "ColumnView int64 value at index 1");
+    check(span[2] == 30, "ColumnView int64 value at index 2");
 }
 
 void test_column_view_float32()
@@ -55,9 +57,9 @@ void test_column_view_float32()
 
     auto span = column.as_span<float>();
     check(span.size() == 3, "ColumnView float32 span size");
-    check(span[0] == 1.5f, "ColumnView float32 value 0");
-    check(span[1] == 2.5f, "ColumnView float32 value 1");
-    check(span[2] == 3.5f, "ColumnView float32 value 2");
+    check(span[0] == 1.5f, "ColumnView float32 value at index 0");
+    check(span[1] == 2.5f, "ColumnView float32 value at index 1");
+    check(span[2] == 3.5f, "ColumnView float32 value at index 2");
 }
 
 void test_column_view_type_mismatch_throws()
@@ -74,9 +76,71 @@ void test_column_view_type_mismatch_throws()
     check(threw, "ColumnView type mismatch throws");
 }
 
+void test_column_view_non_empty_null_throws()
+{
+    bool threw = false;
+    try {
+        ColumnView column(Type::Int64, nullptr, 1);
+        (void)column;
+    } catch (const std::invalid_argument&) {
+        threw = true;
+    }
+    check(threw, "ColumnView data null throws");
+}
+
+
+void test_column_view_empty_null()
+{
+    ColumnView column(Type::Int64, nullptr, 0);
+    check(column.row_count() == 0, "Empty null ColumnView row_count");
+    check(column.empty(), "Empty null ColumnView empty");
+}
+
+void test_data_chunk_same_length_columns()
+{
+    std::vector<std::int64_t> ids {1, 2, 3};
+    std::vector<double> values {10.0, 20.0, 30.0};
+
+    DataChunk chunk;
+    chunk.add_column(ColumnView(ids.data(), ids.size()));
+    chunk.add_column(ColumnView(values.data(), values.size()));
+    check(chunk.column_count() == 2, "DataChunk column_count");
+    check(chunk.row_count() == 3, "DataChunk row_count");
+
+    auto id_span = chunk.column(0).as_span<std::int64_t>();
+    auto value_span = chunk.column(1).as_span<double>();
+
+    check(id_span[0] == 1, "DataChunk id at index 0");
+    check(value_span[2] == 30.0, "DataChunk value at index 2");
+}
+
+
+void test_data_chunk_mismatched_lengths_throw()
+{
+    std::vector<std::int64_t> ids {1, 2, 3};
+    std::vector<double> value {10.0, 20.0};
+
+    bool threw = false;
+    try {
+        volap::core::DataChunk chunk;
+        chunk.add_column(volap::core::ColumnView(ids.data(), ids.size()));
+        chunk.add_column(volap::core::ColumnView(value.data(), value.size()));
+    } catch (const std::invalid_argument&) {
+        threw = true;
+    }
+    check(threw, "DataChunk mismatched lengths throw");
+}
+
+void test_data_chunk_empty()
+{
+    volap::core::DataChunk chunk;
+    check(chunk.column_count() == 0, "DataChunk column_count");
+    check(chunk.row_count() == 0, "DataChunk row_count");
+    check(chunk.empty(), "DataChunk empty");
+}
+
 
 } // namespace
-
 
 
 int main()
@@ -85,6 +149,11 @@ int main()
     test_column_view_int64();
     test_column_view_float32();
     test_column_view_type_mismatch_throws();
+    test_column_view_non_empty_null_throws();
+    test_column_view_empty_null();
+    test_data_chunk_same_length_columns();
+    test_data_chunk_mismatched_lengths_throw();
     std::cout << "test_data_chunk: PASS\n";
     return 0;
 }
+
