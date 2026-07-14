@@ -74,6 +74,7 @@ public:
 private:
     // Relative position in the batch not absolute
     // Prefer uint32 over uint16 for flexibility
+    // Does not need to be 64 bits as it's a batch of the data not the full data
     std::vector<std::uint32_t> indices_;
 };
 
