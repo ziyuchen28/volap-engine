@@ -62,6 +62,24 @@ void test_select_f32_greater_than()
 }
 
 
+void test_type_mismatch_throw()
+{
+    std::vector<float> values {1.0f, 2.0f};
+
+    ColumnView column(values.data(), values.size());
+    SelectionVector out;
+
+    bool threw = false;
+    try {
+        select_i64_gt(column, 0, out);
+    } catch (const std::logic_error&) {
+        threw = true;
+    }
+
+    check(threw, "select type mismatch throws");
+}
+
+
 } // namespace
 
 
