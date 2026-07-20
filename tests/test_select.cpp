@@ -1,6 +1,8 @@
 
 #include "volap/kernels/select.h"
 
+#include "test_util.h"
+
 #include <vector>
 #include <iostream>
 
@@ -9,13 +11,6 @@ namespace {
 using namespace volap::kernels;
 using namespace volap::core;
 
-void check(bool condition, const char *message)
-{
-    if (!condition) {
-        std::cerr << "CHECK failed: " << message << "\n";
-        std::exit(1);
-    }
-}
 
 void test_select_i64_greater_than()
 {
@@ -26,9 +21,9 @@ void test_select_i64_greater_than()
 
     select_i64_gt(column, 100, out);
 
-    check(out.size() == 2, "i64 gt size");
-    check(out[0] == 1, "i64 gt index 0");
-    check(out[1] == 3, "i64 gt index 1");
+    validate(out.size() == 2, "i64 gt size");
+    validate(out[0] == 1, "i64 gt index 0");
+    validate(out[1] == 3, "i64 gt index 1");
 }
 
 
@@ -41,9 +36,9 @@ void test_select_f64_greater_than()
 
     select_i64_gt(column, 2.0, out);
 
-    check(out.size() == 2, "f64 gt size");
-    check(out[0] == 1, "f64 gt index 0");
-    check(out[1] == 3, "f64 gt index 1");
+    validate(out.size() == 2, "f64 gt size");
+    validate(out[0] == 1, "f64 gt index 0");
+    validate(out[1] == 3, "f64 gt index 1");
 }
 
 
@@ -56,9 +51,9 @@ void test_select_f32_greater_than()
 
     select_i64_gt(column, 2.0, out);
 
-    check(out.size() == 2, "f32 gt size");
-    check(out[0] == 1, "f32 gt index 0");
-    check(out[1] == 3, "f32 gt index 1");
+    validate(out.size() == 2, "f32 gt size");
+    validate(out[0] == 1, "f32 gt index 0");
+    validate(out[1] == 3, "f32 gt index 1");
 }
 
 
@@ -76,7 +71,7 @@ void test_type_mismatch_throw()
         threw = true;
     }
 
-    check(threw, "select type mismatch throws");
+    validate(threw, "select type mismatch throws");
 }
 
 

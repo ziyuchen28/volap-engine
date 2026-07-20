@@ -25,7 +25,7 @@ class Buffer
 public:
     // A shared pointer to wrap the external data extending it's lifetime
     // const void: we don't care what the data is
-    using Lifetime = std::shared_ptr<const void>;
+    using BufferLifetime = std::shared_ptr<const void>;
 
     Buffer() noexcept = default;
 
@@ -49,7 +49,7 @@ public:
     // any Buffer referencing it exists.
     static Buffer wrap_external(const void* data,
                                 std::size_t bytes,
-                                Lifetime lifetime,
+                                BufferLifetime lifetime,
                                 std::size_t alignment = 1);
 
     const std::byte *data() const noexcept;

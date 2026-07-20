@@ -44,7 +44,7 @@ struct Buffer::BufferStorage
 
     // Used only to keep the externally owned data alive.
     // Doesn't care what the data is
-    Lifetime lifetime;
+    BufferLifetime lifetime;
 
     ~BufferStorage()
     {
@@ -80,6 +80,7 @@ Buffer Buffer::allocate(std::size_t bytes,
     auto storage = std::make_shared<BufferStorage>();
     auto *date = static_cast<std::byte*>(
         ::operator new(bytes, std::align_val_t{alignment}));
+
     storage->type = BufferType::Owned;
     storage->size_bytes = bytes;
     storage->alignment = alignment;
@@ -91,7 +92,7 @@ Buffer Buffer::allocate(std::size_t bytes,
 
 Buffer Buffer::wrap_external(const void *data,
                              std::size_t bytes,
-                             Lifetime lifetime,
+                             BufferLifetime lifetime,
                              std::size_t alignment)
 {
     // TO DO: should we handle alignment if data not created via buffer allocator?
@@ -164,6 +165,12 @@ BufferType Buffer::type() const noexcept
 {
     if (storage_) return storage_->type;
     return BufferType::Empty;
+}
+
+bool Buffer::is_owned() const noexcept
+{
+    if (!storage_) return false;
+    return storage_->type == BufferType::Owned;
 }
 
 bool Buffer::empty() const noexcept
