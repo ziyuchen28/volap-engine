@@ -30,3 +30,11 @@ inline std::size_t parse_size_arg(int argc, char **argv, const std::string &key,
         throw std::runtime_error("invalid numeric argument for " + key + ": " + value);
     }
 }
+
+inline void check(bool condition, const char *err_message)
+{
+    if (!condition) {
+        std::cerr << "Check failed: " << err_message << '\n';
+        std::exit(1);
+    }
+}

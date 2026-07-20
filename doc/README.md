@@ -73,30 +73,16 @@ Manges memory ownership, lifetime, alignment and mutability
 
 Buffer types:
 
-    AlignedBuffer:
+    Owned:
       owns and allocates memory
       guarantees alignment
       writable only when uniquely referenced
 
-    BufferView:
+    External:
       refers to externally managed memory
       read-only
       holds lifetime token / releaser
   
-
-
-Buffer shared by vectors requires unique ownership for writes: controlled by atomic ref count
-
-    reference count == 1:
-      no other vector observes this buffer
-      mut is permitted
-
-    reference count > 1:
-      buffer is shared
-      immutable
-      copy-on-write: allocate/copy before mut
-
-
 
 
 Operator
