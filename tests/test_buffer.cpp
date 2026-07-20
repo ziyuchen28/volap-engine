@@ -50,6 +50,23 @@ void test_owned_buffer_alignment()
     std::cout << "[PASS] test_owned_buffer_alignment\n";
 }
 
+void test_owned_buffer_invalid_alignment()
+{
+    validate_throws<std::invalid_argument>(
+        [] {
+            Buffer::allocate(64, 3);
+        },
+        "owned buffer rejects non-power-of-two alignment"
+    );
+
+    validate_throws<std::invalid_argument>(
+        [] {
+            Buffer::allocate(64, 8);
+        },
+        "owned buffer rejects alignment smaller than std::max_align_t"
+    );
+}
+
 void test_owned_buffer_write()
 {
     constexpr std::size_t bytes = 1024;
@@ -92,6 +109,13 @@ void test_copy_buffer_shares_storage()
     validate(!original.is_writable(), "original buffer is not writable");
     validate(!copy.is_writable(), "copy buffer is not writable");
 
+    validate_throws<std::logic_error>(
+        [&] {
+            original.mut_data();
+        },
+        "shared buffer not writable"
+    );
+
     copy = volap::core::Buffer{};
 
     validate(original.is_exclusive(), "original buffer exclusive after copy reassigned");
@@ -124,10 +148,9 @@ void test_external_buffer_is_read_only()
         std::make_shared<std::vector<std::int64_t>>(
             std::initializer_list<std::int64_t>{10, 20, 30});
 
-    Buffer buffer =
-        Buffer::wrap_external(owner->data(),
-                              owner->size() * sizeof(std::int64_t),
-                              owner);
+    Buffer buffer = Buffer::wrap_external(owner->data(),
+                                          owner->size() * sizeof(std::int64_t),
+                                          owner);
 
     validate(buffer.type() == BufferType::External, "external buffer");
     validate(buffer.is_exclusive(), "external buffer starts as exclusive");
@@ -143,7 +166,7 @@ void test_external_buffer_is_read_only()
 }
 
 
-void test_pinning_external_buffer_lifetime()
+void test_external_buffer_pinned_with_lifetime()
 {
     std::weak_ptr<std::vector<std::int64_t>> observer;
     
@@ -180,16 +203,32 @@ void test_pinning_external_buffer_lifetime()
     std::cout << "[PASS] test_pinning_external_buffer_lifetime\n";
 }
 
+void test_external_buffer_requires_lifetime()
+{
+    std::int64_t values[] = {1, 2, 3};
+
+    validate_throws<std::invalid_argument>(
+        [&] {
+            Buffer::wrap_external(values,
+                                  sizeof(values),
+                                  {},
+                                  alignof(std::int64_t));
+        },
+        "external non-empty buffer requires lifetime"
+    );
+}
+
 } // namespace 
 
 int main()
 {
     test_empty_buffer();
     test_owned_buffer_alignment();
+    test_owned_buffer_invalid_alignment();
     test_owned_buffer_write();
     test_copy_buffer_shares_storage();
     test_move_transfers_handle();
     test_external_buffer_is_read_only();
-    test_pinning_external_buffer_lifetime();
+    test_external_buffer_pinned_with_lifetime();
     std::cout << "[DONE] test_buffer\n";
 }

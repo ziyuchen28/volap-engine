@@ -18,3 +18,15 @@ inline void validate(bool condition, const char *err_message)
         std::exit(1);
     }
 }
+
+template <typename Exception, typename Function>
+inline void validate_throws(Function &&function, const char *message)
+{
+    bool threw = false;
+    try {
+        function();
+    } catch (const Exception&) {
+        threw = true;
+    }
+    validate(threw, message);
+}

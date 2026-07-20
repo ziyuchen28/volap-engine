@@ -96,6 +96,7 @@ Buffer Buffer::wrap_external(const void *data,
                              std::size_t alignment)
 {
     // TO DO: should we handle alignment if data not created via buffer allocator?
+    // for SIMD: uses unaligned instruction for now
     (void)alignment;
     if (bytes == 0) {
         return {};
