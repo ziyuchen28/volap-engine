@@ -27,7 +27,6 @@ void check(bool condition, const char *message)
 
 void test_type_metadata()
 {
-
     check(type_v<std::uint8_t> == Type::Bool8, "uint8_t kind");
     check(type_v<std::int64_t> == Type::Int64, "int64_t kind");
     check(type_v<float> == Type::Float32, "float kind");

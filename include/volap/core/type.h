@@ -17,15 +17,17 @@ enum class Type
 
 inline constexpr std::size_t type_size(Type type) noexcept
 {
-    switch (type) 
-    {
+    switch (type) {
         case Type::Bool8:
             // vector of std::bool won't work due to compression
             return sizeof(std::uint8_t);
+
         case Type::Int64:
             return sizeof(std::int64_t);
+
         case Type::Float32:
             return sizeof(float);
+
         case Type::Float64:
             return sizeof(double);
     }

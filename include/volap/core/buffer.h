@@ -80,7 +80,9 @@ public:
 private:
     struct BufferStorage;
 
-    explicit Buffer(std::shared_ptr<BufferStorage> storage) noexcept;
+    // explicit Buffer(std::shared_ptr<BufferStorage> storage) noexcept;
+    explicit Buffer(const std::shared_ptr<BufferStorage> &storage) noexcept;
+    explicit Buffer(std::shared_ptr<BufferStorage> &&storage) noexcept;
     std::shared_ptr<BufferStorage> storage_;
 };
 

@@ -18,15 +18,14 @@ void validate_alignment(std::size_t alignment)
 {
     if (!is_power_of_two(alignment)) {
         throw std::invalid_argument(
-            "Buffer::allocate: alignment must be non-zero power of two"
+            "Buffer allocation alignment must be non-zero power of two"
         );
     }
 
     // Alignment smaller than std::max_align_t not supported by over aligned new/delete.
     if (alignment < alignof(std::max_align_t)) {
         throw std::invalid_argument(
-            "Buffer::allocate: alignment must be at least "
-            "alignof(std::max_align_t)"
+            "Buffer alignment must be at least alignof(std::max_align_t)"
         );
     }
 }
@@ -39,8 +38,8 @@ struct Buffer::BufferStorage
     std::size_t size_bytes = 0;
     std::size_t alignment = 1;
 
-    const std::byte* data = nullptr;
-    std::byte* mut_data = nullptr;
+    const std::byte *data = nullptr;
+    std::byte *mut_data = nullptr;
 
     // Used only to keep the externally owned data alive.
     // Doesn't care what the data is
@@ -57,9 +56,18 @@ struct Buffer::BufferStorage
     }
 };
 
-Buffer::Buffer(std::shared_ptr<BufferStorage> storage) noexcept
-    : storage_(std::move(storage))
+// Buffer::Buffer(std::shared_ptr<BufferStorage> storage) noexcept
+//     : storage_(std::move(storage))
+// {}
+
+Buffer::Buffer(const std::shared_ptr<BufferStorage> &storage) noexcept 
+    : storage_(storage) 
 {}
+
+Buffer::Buffer(std::shared_ptr<BufferStorage> &&storage) noexcept 
+    : storage_(std::move(storage)) 
+{}
+
 
 Buffer::~Buffer() = default;
 
@@ -78,14 +86,14 @@ Buffer Buffer::allocate(std::size_t bytes,
     }
 
     auto storage = std::make_shared<BufferStorage>();
-    auto *date = static_cast<std::byte*>(
+    auto *data = static_cast<std::byte*>(
         ::operator new(bytes, std::align_val_t{alignment}));
 
     storage->type = BufferType::Owned;
     storage->size_bytes = bytes;
     storage->alignment = alignment;
-    storage->data = date;
-    storage->mut_data = date;
+    storage->data = data;
+    storage->mut_data = data;
 
     return Buffer(std::move(storage));
 }
@@ -107,8 +115,7 @@ Buffer Buffer::wrap_external(const void *data,
     }
     if (!lifetime) {
         throw std::invalid_argument(
-            "Non-empty external buffer "
-            "requires a lifetime token");
+            "Non-empty external buffer requires a lifetime token");
     }
 
     auto storage = std::make_shared<BufferStorage>();
@@ -172,6 +179,12 @@ bool Buffer::is_owned() const noexcept
 {
     if (!storage_) return false;
     return storage_->type == BufferType::Owned;
+}
+
+bool Buffer::is_external() const noexcept
+{
+    if (!storage_) return false;
+    return storage_->type == BufferType::External;
 }
 
 bool Buffer::empty() const noexcept

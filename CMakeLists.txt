@@ -26,6 +26,8 @@ target_compile_options(volap_kernels PRIVATE -Wall -Wextra -Wpedantic -O2)
 
 add_library(volap_core STATIC
   src/core/buffer.cpp
+  src/core/vector.cpp
+  src/core/flat_vector.cpp
 )
 add_library(volap::core ALIAS volap_core)
 target_include_directories(volap_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -89,6 +91,12 @@ if(VOLAP_BUILD_TESTS)
     volap::core
   )
   add_test(NAME volap_test_buffer COMMAND test_buffer)
+
+  add_executable(test_vector tests/test_vector.cpp)
+  target_link_libraries(test_vector PRIVATE 
+    volap::core
+  )
+  add_test(NAME volap_test_vector COMMAND test_vector)
 
 endif()
 
