@@ -44,7 +44,7 @@ void Vector::clear() noexcept
     size_ = 0;
 }
 
-void Vector::throw_capacity_error() const 
+[[noreturn]] void Vector::throw_capacity_error() const 
 {
     throw std::invalid_argument(
         "row count exceeds maximum allocated capacity."

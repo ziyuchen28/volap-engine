@@ -3,6 +3,8 @@
 
 #include "test_util.h"
 
+#include <vector>
+
 namespace 
 {
 
@@ -77,6 +79,123 @@ void test_flat_vector_clear_reuses_allocation()
     std::cout << "[PASS] test_flat_vector_clear_reuses_allocation" << std::endl;
 }
 
+void test_flat_vector_external_raed_access()
+{
+    auto owner = std::make_shared<std::vector<std::int64_t>>(
+        std::initializer_list<std::int64_t>{10, 20, 30});
+
+    auto vector = FlatVector::wrap_external(volap::core::Type::Int64,
+                                            owner->data(),
+                                            owner->size(),
+                                            owner);
+
+    validate(vector.size() == 3, "external size");
+
+    validate(
+        vector.capacity() == 3,
+        "external capacity"
+    );
+
+    validate(
+        !vector.is_writable(),
+        "external vector is read-only"
+    );
+
+    const auto *values = FlatVector::get_data<std::int64_t>(vector);
+
+    validate(values[0] == 10, "external value 0");
+    validate(values[1] == 20, "external value 1");
+    validate(values[2] == 30, "external value 2");
+
+    validate_throws<std::logic_error>(
+        [&] {
+            (void)FlatVector::get_mutable_data<std::int64_t>(vector);
+        },
+        "external vector immutable"
+    );
+
+    std::cout << "[PASS] test_flat_vector_external_raed_access" << std::endl;
+}
+
+void test_flat_vector_external_lifetime()
+{
+    std::weak_ptr<std::vector<std::int64_t>> weak_owner;
+    {
+        auto owner = std::make_shared<std::vector<std::int64_t>>(
+            std::initializer_list<std::int64_t>{10, 20, 30});
+
+        weak_owner = owner;
+        auto vector = FlatVector::wrap_external(Type::Int64,
+                                                owner->data(),
+                                                owner->size(),
+                                                owner);
+        owner.reset();
+        validate(!weak_owner.expired(),
+                 "external owner pinned by Vector");
+
+        validate(FlatVector::get_data<std::int64_t>(vector)[2] == 30,
+                 "pinned external memory readable");
+    }
+
+    validate(weak_owner.expired(),
+             "external owner released with Vector out of scope");
+    std::cout << "[PASS] test_flat_vector_external_lifetime" << std::endl;
+}
+
+void test_flat_vector_reference_sharing_buffer()
+{
+    auto original = FlatVector::create(Type::Int64, 4);
+
+    auto *data = FlatVector::get_mutable_data<std::int64_t>(original);
+
+    data[0] = 7;
+    data[1] = 9;
+
+    original.set_size(2);
+
+    {
+        auto alias = original.reference();
+
+        validate(
+            !original.is_writable(),
+            "original is not writable while referenced"
+        );
+
+        validate(
+            !alias.is_writable(),
+            "alias is not writable"
+        );
+
+        const auto *alias_data = FlatVector::get_data<std::int64_t>(alias);
+
+        validate(alias_data[0] == 7, "alias value 0");
+        validate(alias_data[1] == 9, "alias value 1");
+
+        validate_throws<std::logic_error>(
+            [&] {
+                (void)FlatVector::get_mutable_data<std::int64_t>(original);
+            },
+            "shared vector immutable"
+        );
+    }
+
+    validate(
+        original.is_writable(),
+        "original writable after alias destruction"
+    );
+
+    auto *mutable_values = FlatVector::get_mutable_data<std::int64_t>(original);
+
+    mutable_values[0] = 100;
+
+    validate(
+        FlatVector::get_data<std::int64_t>(original)[0] == 100,
+        "unique vector mutable again"
+    );
+
+    std::cout << "[PASS] test_flat_vector_reference_sharing_buffer" << std::endl;
+}
+
 } // namespace
 
 
@@ -85,4 +204,7 @@ int main()
     test_flat_vector_metadata();
     test_flat_vector_write_and_read();
     test_flat_vector_clear_reuses_allocation();
+    test_flat_vector_external_raed_access();
+    test_flat_vector_external_lifetime();
+    test_flat_vector_reference_sharing_buffer();
 }

@@ -30,3 +30,8 @@ inline void validate_throws(Function &&function, const char *message)
     }
     validate(threw, message);
 }
+
+inline void succeeded(std::string_view func_name)
+{
+    std::cout << "[PASS] " << func_name << "\n";
+}

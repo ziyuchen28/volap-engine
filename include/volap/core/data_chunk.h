@@ -1,51 +1,37 @@
 
 #pragma once
 
-#include "volap/core/column_view.h"
+#include "volap/core/vector.h"
 
 #include <vector>
 
 namespace volap::core {
 
 // This owns a list of views of columns
-class DataChunk 
+class DataChunk final
 {
 public:
-    DataChunk() = default;
 
-    DataChunk(std::initializer_list<ColumnView> columns)
-    {
-        for (const ColumnView &column : columns) {
-            add_column(column);
-        }
-    }
+    DataChunk() noexcept = default;
+    ~DataChunk() = default;
 
-    DataChunk(std::vector<ColumnView> columns)
-    {
-        for (const ColumnView &column : columns) {
-            add_column(column);
-        }
-    }
+    DataChunk(const DataChunk&) = delete;
+    DataChunk& operator=(const DataChunk&) = delete;
 
-    void add_column(ColumnView column)
-    {
-        if (columns_.empty()) {
-            row_count_ = column.row_count();
-        } else if (column.row_count() != row_count_) {
-            // One chunk is a stripe across a portion of a table 
-            throw std::invalid_argument("DataChunk: column row count mismatch");
-        }
+    DataChunk(DataChunk &&other) noexcept;
+    DataChunk& operator=(DataChunk &&other) noexcept;
 
-        columns_.push_back(column);
-    }
+    void reserve_columns(std::size_t column_count);
 
-    const ColumnView &column(std::size_t index) const
-    {
-        if (index >= columns_.size()) {
-            throw std::out_of_range("DataChunk::column");
-        }
-        return columns_[index];
-    }
+    // Transfers ownership of the Vector object into this chunk.
+    // The Vector's logical size must match the current chunk row count.
+    // For the first column, its size establishes the initial row count.
+    void add_column(Vector &&vector);
+
+    const Vector &column(std::size_t index) const;
+
+    // For getting mutable column
+    Vector &column(std::size_t index);
 
     std::size_t column_count() const noexcept
     {
@@ -56,19 +42,23 @@ public:
     {
         return row_count_;
     }
+    
+    // This also sets the vector size for each column
+    // This is mainly used in batch operation hot path to avoid incrementing size 
+    // for each element added.
+    void set_row_count(std::size_t row_count);
+
+    // Fast reset:
+    // Only reset the size, internal memory not touched
+    void clear() noexcept;
 
     bool empty() const noexcept
     {
         return row_count_ == 0;
     }
 
-    const std::vector<ColumnView> &columns() const noexcept
-    {
-        return columns_;
-    }
-
 private:
-    std::vector<ColumnView> columns_;
+    std::vector<Vector> columns_;
     std::size_t row_count_ = 0;
 };
 
