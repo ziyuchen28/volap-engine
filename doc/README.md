@@ -33,6 +33,7 @@ DataChunk
 
 
 2 Vector 
+Vector is a move-only generic execution-column object
 Represents one logical column slice/batch
 type: the data type of one value in the vector
 encoding: how data how logically represented 
@@ -66,6 +67,9 @@ Vector Types:
       representations of complex logical types
     // TO DO 
 
+
+
+SelectionVector: a vector/array of row indexes selecting rows from another vector/chunk
 
 
 3 Buffer

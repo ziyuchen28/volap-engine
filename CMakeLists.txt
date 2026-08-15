@@ -13,17 +13,7 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|X86_64|amd64|AMD64|i[3-6]86)$")
   set(VOLAP_X86_FAMILY ON)
 endif()
 
-
-add_library(volap_kernels STATIC
-  src/kernels/sum_product_scalar.cpp
-  src/kernels/sum_product.cpp
-)
-add_library(volap::kernels ALIAS volap_kernels)
-target_include_directories(volap_kernels PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_compile_features(volap_kernels PUBLIC cxx_std_20)
-target_compile_options(volap_kernels PRIVATE -Wall -Wextra -Wpedantic -O2)
-
-
+# core data structure
 add_library(volap_core STATIC
   src/core/buffer.cpp
   src/core/vector.cpp
@@ -34,6 +24,19 @@ add_library(volap::core ALIAS volap_core)
 target_include_directories(volap_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(volap_core PUBLIC cxx_std_20)
 target_compile_options(volap_core PRIVATE -Wall -Wextra -Wpedantic -O2)
+
+# math kernel
+add_library(volap_kernels STATIC
+  src/kernels/sum_product_scalar.cpp
+  src/kernels/sum_product.cpp
+  src/kernels/select.cpp
+)
+add_library(volap::kernels ALIAS volap_kernels)
+target_include_directories(volap_kernels PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_features(volap_kernels PUBLIC cxx_std_20)
+target_compile_options(volap_kernels PRIVATE -Wall -Wextra -Wpedantic -O2)
+target_link_libraries(volap_kernels PUBLIC volap::core)
+
 
 # ensure compiler vectorization disabled to keep the scalar baseline truly scalar
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -98,6 +101,10 @@ if(VOLAP_BUILD_TESTS)
     volap::core
   )
   add_test(NAME volap_test_data_chunk COMMAND test_data_chunk)
+
+  add_executable(test_select tests/test_select.cpp)
+  target_link_libraries(test_select PRIVATE volap::kernels)
+  add_test(NAME volap_test_select COMMAND test_select)
 
 endif()
 

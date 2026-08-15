@@ -8,7 +8,8 @@
 #include <utility>
 #include <limits>
 
-namespace volap::core {
+namespace volap::core 
+{
 
 
 inline std::size_t checked_bytes_size(Type type, std::size_t row_count)
@@ -58,9 +59,12 @@ inline bool satisfies_natural_alignment(const void *data, Type type) noexcept
 
 enum class VectorEncoding {
     Flat
+
 };
 
-class Vector {
+
+class Vector 
+{
 public:
     ~Vector() = default;
 
