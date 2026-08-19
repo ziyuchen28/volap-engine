@@ -137,6 +137,75 @@ void test_scan_emits_fixed_size_chunks()
     succeeded(__func__);
 }
 
+
+void test_scan_reuses_output_buffers()
+{
+    DataChunk source = make_source_chunk();
+
+    InMemoryScan scan(std::move(source), 4);
+    DataChunk output;
+
+    validate(scan.next(output), "first reusable chunk exists");
+
+    const std::int64_t *first_id_address =
+        FlatVector::get_data<std::int64_t>(
+            output.column(0)
+        );
+
+    const double *first_value_address =
+        FlatVector::get_data<double>(
+            output.column(1)
+        );
+
+    validate(scan.next(output), "second reusable chunk exists");
+
+    const std::int64_t *second_id_address =
+        FlatVector::get_data<std::int64_t>(
+            output.column(0)
+        );
+
+    const double *second_value_address =
+        FlatVector::get_data<double>(
+            output.column(1)
+        );
+
+    validate(
+        first_id_address == second_id_address,
+        "id output buffer reused"
+    );
+
+    validate(
+        first_value_address == second_value_address,
+        "value output buffer reused"
+    );
+
+    succeeded(__func__);
+}
+
+
+void test_scan_reset()
+{
+    DataChunk source = make_source_chunk();
+
+    InMemoryScan scan(std::move(source), 4);
+    DataChunk output;
+
+    validate(scan.next(output), "scan before reset");
+    validate(scan.position() == 4, "position before reset");
+
+    scan.reset();
+    validate(scan.position() == 0, "position reset");
+
+    validate(scan.next(output), "scan after reset");
+    validate_output_rows(
+        output,
+        {101, 102, 103, 104},
+        {10.0, 20.0, 30.0, 40.0}
+    );
+
+    succeeded(__func__);
+}
+
 } // anynomous namespace
 
 int main()

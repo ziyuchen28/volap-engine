@@ -178,11 +178,6 @@ bool InMemoryScan::next(volap::core::DataChunk &output)
     return true;
 }
 
-std::size_t InMemoryScan::position() const noexcept
-{
-    return position_;
-}
-
 
 } // namespace volap::execution
 

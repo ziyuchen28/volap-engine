@@ -13,7 +13,16 @@ public:
     InMemoryScan(DataChunk source, std::size_t chunk_size);
 
     bool next(DataChunk& output);
-    std::size_t position() const noexcept;
+
+    std::size_t position() const noexcept
+    {
+        return position_;
+    }
+
+    void reset() noexcept
+    {
+        position_ = 0;
+    }
 
 private:
     void prepare_output(DataChunk &output) const;
