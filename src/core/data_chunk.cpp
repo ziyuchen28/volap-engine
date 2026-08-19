@@ -84,7 +84,7 @@ void DataChunk::set_row_count(std::size_t row_count)
 
 void DataChunk::clear() noexcept
 {
-    for (Vector& vector : columns_) {
+    for (Vector &vector : columns_) {
         vector.clear();
     }
 

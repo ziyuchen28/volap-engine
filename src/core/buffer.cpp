@@ -18,15 +18,13 @@ void validate_alignment(std::size_t alignment)
 {
     if (!is_power_of_two(alignment)) {
         throw std::invalid_argument(
-            "Buffer allocation alignment must be non-zero power of two"
-        );
+            "Buffer allocation alignment must be non-zero power of two");
     }
 
     // Alignment smaller than std::max_align_t not supported by over aligned new/delete.
     if (alignment < alignof(std::max_align_t)) {
         throw std::invalid_argument(
-            "Buffer alignment must be at least alignof(std::max_align_t)"
-        );
+            "Buffer alignment must be at least alignof(std::max_align_t)");
     }
 }
 
@@ -144,14 +142,12 @@ std::byte *Buffer::mut_data()
 
     if (storage_->type != BufferType::Owned) {
         throw std::logic_error(
-            "External buffer is read-only"
-        );
+            "External buffer is read-only");
     }
 
     if (storage_.use_count() != 1) {
         throw std::logic_error(
-            "Shared buffer is not writable"
-        );
+            "Shared buffer is not writable");
     }
 
     return storage_->mut_data;

@@ -70,6 +70,7 @@ Vector Types:
 
 
 SelectionVector: a vector/array of row indexes selecting rows from another vector/chunk
+(Evaluate one predicate over one vector and decides which row indexes passed.)
 
 
 3 Buffer
@@ -89,7 +90,28 @@ Buffer types:
   
 
 
-Operator
+4 Operator
+(1) InMemoryScan operator
 
+             owns
+InMemoryScan ------> source DataChunk
+                         |
+                         | read only
+                         v
+
+                     scan/copy
+                         |
+                         v
+
+caller owns ------> output DataChunk
+                         ^
+                         |
+                   next(output)
+
+
+
+
+X Open Questions
+(1) Should chunk size during scan fixed or dynamic based on caller input?
 
 

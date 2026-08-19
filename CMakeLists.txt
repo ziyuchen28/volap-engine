@@ -37,7 +37,6 @@ target_compile_features(volap_kernels PUBLIC cxx_std_20)
 target_compile_options(volap_kernels PRIVATE -Wall -Wextra -Wpedantic -O2)
 target_link_libraries(volap_kernels PUBLIC volap::core)
 
-
 # ensure compiler vectorization disabled to keep the scalar baseline truly scalar
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   set_source_files_properties(
@@ -64,6 +63,16 @@ if (VOLAP_X86_FAMILY)
     )
   endif()
 endif()
+
+# executor/operator
+add_library(volap_execution STATIC
+  src/execution/in_memory_scan.cpp
+)
+add_library(volap::execution ALIAS volap_execution)
+target_include_directories(volap_kernels PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_features(volap_execution PUBLIC cxx_std_20)
+target_compile_options(volap_execution PRIVATE -Wall -Wextra -Wpedantic -O2)
+target_link_libraries(volap_execution PUBLIC volap::core)
 
 
 if(PROJECT_IS_TOP_LEVEL)
@@ -105,6 +114,10 @@ if(VOLAP_BUILD_TESTS)
   add_executable(test_select tests/test_select.cpp)
   target_link_libraries(test_select PRIVATE volap::kernels)
   add_test(NAME volap_test_select COMMAND test_select)
+
+  add_executable(test_in_memory_scan tests/test_in_memory_scan.cpp)
+  target_link_libraries(test_in_memory_scan PRIVATE volap::execution)
+  add_test(NAME volap_test_in_memory_scan COMMAND test_in_memory_scan)
 
 endif()
 

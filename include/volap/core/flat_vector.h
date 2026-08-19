@@ -12,7 +12,9 @@ struct FlatVector final
     FlatVector() = delete;
 
     // Creates a flat vector that owns the underlying storage
+    // This is empty vector with allocated capacity 
     static Vector create(Type type, std::size_t row_capacity);
+
 
     // Creates a read-only flat Vector over external storage
     // data could come from:
@@ -21,11 +23,10 @@ struct FlatVector final
     //   mmap files
     //   std::vector
     //   ...
-    static Vector wrap_external(
-        Type type,
-        const void *data,
-        std::size_t row_count,
-        Buffer::BufferLifetime lifetime);
+    static Vector wrap_external(Type type,
+                                const void *data,
+                                std::size_t row_count,
+                                Buffer::BufferLifetime lifetime);
 
     // Read-only access to buffer data.
     template <typename T>
@@ -33,8 +34,7 @@ struct FlatVector final
     {
         static_assert(
             std::is_same_v<T, std::remove_cv_t<T>>,
-            "T must not be const or volatile"
-        );
+            "T must not be const or volatile");
 
         validate_access(vector, type_v<T>);
 
@@ -47,8 +47,7 @@ struct FlatVector final
     {
         static_assert(
             std::is_same_v<T, std::remove_cv_t<T>>,
-            "T must not be const or volatile"
-        );
+            "T must not be const or volatile");
 
         validate_access(vector, type_v<T>);
 

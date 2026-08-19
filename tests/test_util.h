@@ -1,9 +1,14 @@
 
+#include "volap/core/flat_vector.h"
 
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
 
+#include <algorithm>
+#include <initializer_list>
+
+using namespace volap::core;
 
 inline void fail(const char *msg)
 {
@@ -35,3 +40,17 @@ inline void succeeded(std::string_view func_name)
 {
     std::cout << "[PASS] " << func_name << std::endl;
 }
+
+template <typename T>
+inline Vector make_flat_vector(std::initializer_list<T> values)
+{
+    Vector vector = FlatVector::create(type_v<T>, values.size());
+
+    T *data = FlatVector::get_mutable_data<T>(vector);
+    std::copy(values.begin(), values.end(), data);
+
+    vector.set_size(values.size());
+
+    return vector;
+}
+
