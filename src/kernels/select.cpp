@@ -5,19 +5,16 @@
 
 
 namespace volap::kernels 
-
 {
 
 namespace 
 {
 
-
 template <typename T>
-void select_gt_scalar(
-    const T *values,
-    std::size_t count,
-    T threshold,
-    SelectionVector &output)
+void select_gt_scalar(const T *values,
+                      std::size_t count,
+                      T threshold,
+                      SelectionVector &output)
 {
     output.clear();
     output.reserve(count);
