@@ -127,7 +127,7 @@ if(VOLAP_BUILD_TESTS)
 
   add_executable(test_filter tests/test_filter.cpp)
   target_link_libraries(test_filter PRIVATE volap::execution)
-  add_test(NAME volap_test_filter COMMAND test_in_memory_scan)
+  add_test(NAME volap_test_filter COMMAND test_filter)
 
 endif()
 

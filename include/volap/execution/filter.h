@@ -28,6 +28,11 @@ public:
     // selected rows into output.
     void execute(const DataChunk &input, DataChunk &output);
 
+    const SelectionVector &selection() const noexcept
+    {
+        return selection_;
+    }
+
 private:
 
     using Threshold = std::variant<std::int64_t, float, double>;
@@ -36,11 +41,15 @@ private:
 
     // This invokes the select kernel and produces the logical input
     // row indexes that satisfy the predicate.
-    void select(const DataChunk &input);
+    void select_input(const DataChunk &input);
 
-    std::size_t column_index_;
+    // Allocate output vectors on the first call, 
+    // or reuse their buffers on subsequent calls.
+    void prepare_output(const DataChunk &input, DataChunk &output) const;
+
+    std::size_t column_id_;
     Threshold threshold_;
-    volap::core::SelectionVector selection_;
+    SelectionVector selection_;
 
 };
 
