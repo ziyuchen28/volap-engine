@@ -16,6 +16,14 @@ inline void fail(const char *msg)
     std::exit(1);
 }
 
+inline void validate(bool condition)
+{
+    if (!condition) {
+        std::cerr << "Validation failed: \n";
+        std::exit(1);
+    }
+}
+
 inline void validate(bool condition, const char *err_message)
 {
     if (!condition) {

@@ -68,6 +68,7 @@ endif()
 add_library(volap_execution STATIC
   src/execution/in_memory_scan.cpp
   src/execution/filter.cpp
+  src/execution/project.cpp
 )
 add_library(volap::execution ALIAS volap_execution)
 target_include_directories(volap_kernels PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -128,6 +129,10 @@ if(VOLAP_BUILD_TESTS)
   add_executable(test_filter tests/test_filter.cpp)
   target_link_libraries(test_filter PRIVATE volap::execution)
   add_test(NAME volap_test_filter COMMAND test_filter)
+
+  add_executable(test_projection tests/test_projection.cpp)
+  target_link_libraries(test_projection PRIVATE volap::execution)
+  add_test(NAME volap_test_projection COMMAND test_projection)
 
 endif()
 
