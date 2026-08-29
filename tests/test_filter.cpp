@@ -42,15 +42,9 @@ void test_f64_filter_selected_rows()
     validate(output.column_count() == 2, "output column count");
     validate(output.row_count() == 2, "output row count");
 
-    const auto *ids =
-        FlatVector::get_data<std::int64_t>(
-            output.column(0)
-        );
+    const auto *ids = FlatVector::get_data<std::int64_t>( output.column(0));
 
-    const auto *values =
-        FlatVector::get_data<double>(
-            output.column(1)
-        );
+    const auto *values = FlatVector::get_data<double>( output.column(1));
 
     validate(ids[0] == 102, "selected id 0");
     validate(ids[1] == 103, "selected id 1");

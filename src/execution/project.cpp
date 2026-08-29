@@ -4,12 +4,15 @@
 
 #include "volap/execution/project.h"
 #include "volap/core/flat_vector.h"
+#include "volap/kernels/multiply.h"
 
 namespace volap::execution
 {
 
 namespace 
 {
+
+using namespace volap::kernels;
 
 Type checked_projection_type(const Projection &projection,
                              const DataChunk &input)
@@ -105,8 +108,52 @@ void copy_column(const Vector &input, Vector &output, std::size_t row_count)
         "Project: unsupported input data type");
 }
 
-} // anonymous namespace
+// todo: mixed operand types
+void multiply_columns(const Vector &left,
+                      const Vector &right,
+                      Vector &output,
+                      std::size_t row_count)
+{
+    if (left.data_type() != right.data_type() ||
+        left.data_type() != output.data_type()) {
+        throw std::invalid_argument(
+            "Project: multiply vector types do not match");
+    }
 
+    switch (left.data_type()) 
+    {
+        case Type::Float32: 
+        {
+            const float *left_data = FlatVector::get_data<float>(left);
+            const float *right_data = FlatVector::get_data<float>(right);
+            float *output_data = FlatVector::get_mutable_data<float>(output);
+
+            multiply_f32_scalar(left_data, right_data, output_data, row_count);
+
+            return;
+        }
+        case Type::Float64: 
+        {
+            const double *left_data = FlatVector::get_data<double>(left);
+            const double *right_data = FlatVector::get_data<double>(right);
+            double *output_data = FlatVector::get_mutable_data<double>(output);
+
+            multiply_f64_scalar(left_data, right_data, output_data, row_count);
+
+            return;
+        }
+        // TO DO
+        case Type::Bool8:
+        case Type::Int64:
+            break;
+    }
+
+    throw std::invalid_argument(
+        "Project: multiply currently supports only "
+        "Float32 and Float64");
+}
+
+} // anonymous namespace
 
 
 Project::Project(std::vector<Projection> projections)
@@ -149,7 +196,7 @@ void Project::prepare_output(const DataChunk &input,
     output.clear();
 }
 
-void Project::evaluate_projection(const Projection &projection,
+void Project::project_output(const Projection &projection,
                                   const DataChunk &input,
                                   Vector &output) const
 {
@@ -163,8 +210,7 @@ void Project::evaluate_projection(const Projection &projection,
         case ProjectionType::Multiply: {
             const Vector &left = input.column(projection.left_column_index());
             const Vector &right = input.column(projection.right_column_index());
-            // TO DO
-            //multiply_columns(left, right, output, input.row_count());
+            multiply_columns(left, right, output, input.row_count());
             return;
         }
     }
@@ -183,7 +229,7 @@ void Project::execute(const DataChunk &input, DataChunk &output) const
     prepare_output(input, output);
 
     for (std::size_t i = 0; i < projections_.size(); ++i) {
-        evaluate_projection(projections_[i], input, output.column(i));
+        project_output(projections_[i], input, output.column(i));
     }
 
     output.set_row_count(input.row_count());

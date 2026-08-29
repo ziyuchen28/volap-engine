@@ -29,9 +29,9 @@ private:
     void prepare_output(const DataChunk &input,
                         DataChunk &output) const;
 
-    void evaluate_projection(const Projection &projection,
-                             const DataChunk &input,
-                             Vector &output) const;
+    void project_output(const Projection &projection,
+                        const DataChunk &input,
+                        Vector &output) const;
 
     std::vector<Projection> projections_;
 
