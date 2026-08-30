@@ -3,6 +3,8 @@
 
 #include "volap/core/data_chunk.h"
 #include "volap/execution/project.h"
+#include "volap/execution/in_memory_scan.h"
+#include "volap/execution/filter.h"
 
 namespace 
 {
@@ -153,10 +155,122 @@ void test_project_mixed_projections()
     succeeded(__func__);
 }
 
+void test_project_invalid_column_throws()
+{
+    DataChunk input = make_projection_input();
+    DataChunk output;
+
+    Project project({
+        Projection::column(100)
+    });
+
+    bool threw = false;
+    try {
+        project.execute(input, output);
+    } catch (const std::out_of_range &) {
+        // thrown from DataChunk::column
+        threw = true;
+    }
+
+    validate(threw, "invalid projection column throws");
+
+    succeeded(__func__);
+}
+
+void test_scan_filter_project_pipeline()
+{
+    DataChunk source;
+
+    source.add_column(
+        make_flat_vector<std::int64_t>({
+            101,
+            102,
+            103,
+            104,
+            105
+        })
+    );
+
+    source.add_column(
+        make_flat_vector<double>({
+            10.0,
+            25.0,
+            40.0,
+            15.0,
+            50.0
+        })
+    );
+
+    source.add_column(
+        make_flat_vector<double>({
+            2.0,
+            1.0,
+            3.0,
+            4.0,
+            2.0
+        })
+    );
+
+    InMemoryScan scan(std::move(source), 2);
+    Filter filter = Filter::f64_greater_than(1, 20.0);
+
+    Project project({
+        Projection::column(0),
+        Projection::multiply(1, 2)
+    });
+
+    DataChunk scan_output;
+    DataChunk filter_output;
+    DataChunk project_output;
+
+    // expected results
+    // 102, 25.0 * 1.0
+    // 103, 40.0 * 3.0
+    // 105, 50.0 * 2.0
+
+    std::vector<std::int64_t> result_ids;
+    std::vector<double> result_values;
+
+    while (scan.next(scan_output)) {
+        filter.execute(scan_output, filter_output);
+        project.execute(filter_output, project_output);
+
+        const std::int64_t *ids =
+            FlatVector::get_data<std::int64_t>(project_output.column(0));
+
+        const double *values =
+            FlatVector::get_data<double>(project_output.column(1));
+
+        for (std::size_t row = 0;
+             row < project_output.row_count();
+             ++row) 
+        {
+            result_ids.push_back(ids[row]);
+            result_values.push_back(values[row]);
+        }
+    }
+
+    validate(result_ids.size() == 3, "pipeline result count");
+
+    validate(result_ids[0] == 102, "pipeline id 0");
+    validate(result_ids[1] == 103, "pipeline id 1");
+    validate(result_ids[2] == 105, "pipeline id 2");
+
+    validate(result_values[0] == 25.0, "pipeline value 0");
+    validate(result_values[1] == 120.0, "pipeline value 1");
+    validate(result_values[2] == 100.0, "pipeline value 2");
+
+    succeeded(__func__);
+}
+
 } // anonynmous namespace
 
 
 int main()
 {
     test_project_column_reference();
+    test_project_f32_multiply();
+    test_project_mixed_projections();
+    test_project_invalid_column_throws();
+    test_scan_filter_project_pipeline();
 }

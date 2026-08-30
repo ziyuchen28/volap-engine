@@ -30,6 +30,7 @@ add_library(volap_kernels STATIC
   src/kernels/sum_product_scalar.cpp
   src/kernels/sum_product.cpp
   src/kernels/select.cpp
+  src/kernels/multiply.cpp
 )
 add_library(volap::kernels ALIAS volap_kernels)
 target_include_directories(volap_kernels PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
