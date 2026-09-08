@@ -1,3 +1,6 @@
+// TO DO
+// zero copy filter 
+
 
 #include "volap/execution/filter.h"
 #include "volap/kernels/select.h"
@@ -41,7 +44,6 @@ void copy_selected_column(const Vector &input,
         case Type::Int64:
             copy_selected_rows<std::int64_t>(input, selection, output);
             return;
-
         case Type::Float32:
             copy_selected_rows<float>(input, selection, output);
             return;

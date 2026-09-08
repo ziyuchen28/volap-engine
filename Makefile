@@ -14,6 +14,12 @@ configure:
 build: configure
 	cmake --build $(BUILD_DIR) -j -- --no-print-directory
 
+configure-rel:
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release
+
+build-rel: configure-rel
+	cmake --build $(BUILD_DIR) -j -- --no-print-directory
+
 test: build
 	ctest --test-dir $(BUILD_DIR) --output-on-failure
 
@@ -27,6 +33,7 @@ WARMUP ?= 20
 
 bench-sum-product: build
 	./$(BUILD_DIR)/bench_sum_product --rows $(ROWS) --iters $(ITERS) --warmup $(WARMUP)
+
 
 clean:
 	rm -rf $(BUILD_DIR)

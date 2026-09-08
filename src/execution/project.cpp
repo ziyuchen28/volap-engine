@@ -1,3 +1,6 @@
+// TO DO
+//  columnRef is actually ref, no copy
+
 
 #include <stdexcept>
 #include <cstring>

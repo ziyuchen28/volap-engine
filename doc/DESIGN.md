@@ -1,13 +1,13 @@
 
 
-Background
+## Background
 
 
-Overview
+## Overview
 
 
 
-Data Storage:
+## Data Storage:
 
 
 1 DataChunk 
@@ -113,5 +113,12 @@ caller owns ------> output DataChunk
 
 X Open Questions
 (1) Should chunk size during scan fixed or dynamic based on caller input?
+
+
+## Deferred validation and invariants
+- output schema validation
+- writable-buffer assertions
+- encoding assertions
+- capacity assertions
 
 

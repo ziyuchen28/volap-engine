@@ -143,10 +143,17 @@ if (VOLAP_BUILD_BENCH)
   add_executable(bench_sum_product
     bench/bench_sum_product.cpp
   )
-
   target_link_libraries(bench_sum_product
     PRIVATE
       volap::kernels
+  )
+
+  add_executable(bench_scan_filter_project_pipeline
+    bench/bench_scan_filter_project_pipeline.cpp
+  )
+  target_link_libraries(bench_scan_filter_project_pipeline
+    PRIVATE
+      volap_execution
   )
 endif()
 

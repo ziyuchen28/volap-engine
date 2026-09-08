@@ -4,7 +4,6 @@
 namespace volap::core
 {
 
-    
 DataChunk::DataChunk(DataChunk &&other) noexcept
     : columns_(std::move(other.columns_)),
       row_count_(std::exchange(other.row_count_, 0))
@@ -76,7 +75,6 @@ void DataChunk::set_row_count(std::size_t row_count)
     for (Vector &vector : columns_) {
         vector.set_size(row_count);
     }
-
 
     row_count_ = row_count;
 }
