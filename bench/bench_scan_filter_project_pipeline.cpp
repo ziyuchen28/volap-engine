@@ -1,5 +1,5 @@
 
-#include "bench_util.h"
+#include "benchmark_util.h"
 
 #include "volap/core/data_chunk.h"
 #include "volap/core/flat_vector.h"
@@ -15,6 +15,7 @@
 
 using namespace volap::core;
 using namespace volap::execution;
+using namespace volap::bench;
 
 namespace
 {
@@ -102,6 +103,8 @@ int main(int argc, char **argv)
 {
 
     std::cout << "benchmark: scan_filter_project scalar\n";
+
+    print_benchmark_environment();
 
     const std::size_t rows =
         static_cast<std::size_t>(std::stoull(get_arg(argc, argv, "--rows", "1048576")));

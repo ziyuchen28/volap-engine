@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <cstdint>
 
 namespace volap::bench 
 {
@@ -39,6 +40,21 @@ inline void do_not_optimize(const T &value)
 #endif
 
 
+struct BenchmarkEnvironment
+{
+    std::string commit;
 
+    std::string build_type;
+    std::string compiler;
+
+    std::string os;
+    std::string arch;
+    std::string cpu_model;
+
+    std::size_t logical_cpus = 0;
+    std::uint64_t memory_bytes = 0;
+};
+
+void print_benchmark_environment();
 
 } // namespace volap::bench

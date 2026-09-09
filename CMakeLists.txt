@@ -13,6 +13,19 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|X86_64|amd64|AMD64|i[3-6]86)$")
   set(VOLAP_X86_FAMILY ON)
 endif()
 
+execute_process(
+    COMMAND git rev-parse --short=12 HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+
+if (NOT GIT_COMMIT)
+    set(GIT_COMMIT "unknown")
+endif()
+
+
 # core data structure
 add_library(volap_core STATIC
   src/core/buffer.cpp
@@ -139,6 +152,19 @@ endif()
 
 
 # benchmark
+
+add_library(volap_bench_support STATIC
+    bench/benchmark_util.cpp
+)
+target_include_directories(volap_bench_support PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/bench
+)
+target_compile_definitions(volap_bench_support PRIVATE
+    GIT_COMMIT="${GIT_COMMIT}"
+    BUILD_TYPE="$<CONFIG>"
+)
+
+
 if (VOLAP_BUILD_BENCH)
   add_executable(bench_sum_product
     bench/bench_sum_product.cpp
@@ -154,6 +180,7 @@ if (VOLAP_BUILD_BENCH)
   target_link_libraries(bench_scan_filter_project_pipeline
     PRIVATE
       volap_execution
+      volap_bench_support
   )
 endif()
 
