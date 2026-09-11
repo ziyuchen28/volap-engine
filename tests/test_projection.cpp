@@ -2,6 +2,7 @@
 #include "test_util.h"
 
 #include "volap/core/data_chunk.h"
+#include "volap/core/data_schema.h"
 #include "volap/execution/project.h"
 #include "volap/execution/in_memory_scan.h"
 #include "volap/execution/filter.h"
@@ -10,6 +11,7 @@ namespace
 {
 
 using namespace volap::execution;
+using namespace volap::core;
 
 DataChunk make_projection_input()
 {
