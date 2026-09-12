@@ -42,25 +42,25 @@ void copy_range(const Vector &src,
                 std::size_t row_count)
 {
     switch (src.data_type()) {
-        case Type::Bool8:
+        case DataType::Bool8:
             copy_flat_range<std::uint8_t>(src, src_offset, dest, row_count);
             return;
 
-        case Type::Int64:
+        case DataType::Int64:
             copy_flat_range<std::int64_t>(src, src_offset, dest, row_count);
             return;
 
-        case Type::Float32:
+        case DataType::Float32:
             copy_flat_range<float>(src, src_offset, dest, row_count);
             return;
 
-        case Type::Float64:
+        case DataType::Float64:
             copy_flat_range<double>(src, src_offset, dest, row_count);
             return;
     }
 
     throw std::logic_error(
-        "InMemoryScan: unsupported source Type"
+        "InMemoryScan: unsupported source DataType"
     );
 }
 
@@ -124,7 +124,7 @@ void InMemoryScan::prepare_output(DataChunk &output) const
 
         if (source_column.data_type() != output_column.data_type()) {
             throw std::invalid_argument(
-                "InMemoryScan: output column Type does not match source");
+                "InMemoryScan: output column DataType does not match source");
         }
 
         if (source_column.encoding() != volap::core::VectorEncoding::Flat 

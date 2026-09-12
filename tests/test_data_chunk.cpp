@@ -1,9 +1,6 @@
 
-// #include "volap/core/type.h"
-// #include "volap/core/column_view.h"
 #include "volap/core/data_chunk.h"
 #include "volap/core/flat_vector.h"
-// #include "volap/core/selection_vector.h"
 
 #include "test_util.h"
 
@@ -15,18 +12,13 @@ namespace {
 
 using namespace volap::core;
 
-// using volap::core::Type;
-// using volap::core::ColumnView;
-// using volap::core::DataChunk;
-// using volap::core::SelectionVector;
-
 
 void test_type_metadata()
 {
-    validate(type_v<std::uint8_t> == Type::Bool8, "uint8_t kind");
-    validate(type_v<std::int64_t> == Type::Int64, "int64_t kind");
-    validate(type_v<float> == Type::Float32, "float kind");
-    validate(type_v<double> == Type::Float64, "double kind");
+    validate(data_type_v<std::uint8_t> == DataType::Bool8, "uint8_t kind");
+    validate(data_type_v<std::int64_t> == DataType::Int64, "int64_t kind");
+    validate(data_type_v<float> == DataType::Float32, "float kind");
+    validate(data_type_v<double> == DataType::Float64, "double kind");
     succeeded(__func__);
 }
 
@@ -43,8 +35,8 @@ void test_data_chunk_add_empty_columns()
 {
     DataChunk chunk;
     chunk.reserve_columns(2);
-    chunk.add_column(FlatVector::create(Type::Int64, 8));
-    chunk.add_column(FlatVector::create(Type::Float64, 8));
+    chunk.add_column(FlatVector::create(DataType::Int64, 8));
+    chunk.add_column(FlatVector::create(DataType::Float64, 8));
 
     validate(chunk.column_count() == 2, "output column count");
     validate(chunk.row_count() == 0, "output initial row count");
@@ -53,10 +45,10 @@ void test_data_chunk_add_empty_columns()
 
 void test_data_chunk_mismatched_column_size_throws()
 {
-    auto first = FlatVector::create(Type::Int64, 4);
+    auto first = FlatVector::create(DataType::Int64, 4);
     first.set_size(3);
 
-    auto second = FlatVector::create(Type::Float64, 4);
+    auto second = FlatVector::create(DataType::Float64, 4);
     second.set_size(2);
 
     DataChunk chunk;
@@ -78,9 +70,9 @@ void test_data_chunk_write_set_row_count()
 {
     DataChunk chunk;
     // id column
-    chunk.add_column(FlatVector::create(Type::Int64, 8));
+    chunk.add_column(FlatVector::create(DataType::Int64, 8));
     // value column
-    chunk.add_column(FlatVector::create(Type::Float64, 8));
+    chunk.add_column(FlatVector::create(DataType::Float64, 8));
 
     auto *ids = FlatVector::get_mutable_data<std::int64_t>(chunk.column(0));
     auto *values = FlatVector::get_mutable_data<double>(chunk.column(1));
@@ -109,8 +101,8 @@ void test_data_chunk_write_set_row_count()
 void test_data_chunk_row_count_over_vec_capacity()
 {
     DataChunk chunk;
-    chunk.add_column(FlatVector::create(Type::Int64, 8));
-    chunk.add_column(FlatVector::create(Type::Float64, 2));
+    chunk.add_column(FlatVector::create(DataType::Int64, 8));
+    chunk.add_column(FlatVector::create(DataType::Float64, 2));
 
     validate_throws<std::out_of_range>(
         [&] {
@@ -128,8 +120,8 @@ void test_data_chunk_row_count_over_vec_capacity()
 void test_data_chunk_clear_preserves_columns_buffers_and_capacity()
 {
     DataChunk chunk;
-    chunk.add_column(FlatVector::create(Type::Int64, 1024));
-    chunk.add_column(FlatVector::create(Type::Float64, 1024));
+    chunk.add_column(FlatVector::create(DataType::Int64, 1024));
+    chunk.add_column(FlatVector::create(DataType::Float64, 1024));
 
     auto *ids_before = FlatVector::get_mutable_data<std::int64_t>(chunk.column(0));
     auto *values_before = FlatVector::get_mutable_data<double>(chunk.column(1));
@@ -163,12 +155,12 @@ void test_mixed_owned_and_external_columns()
     auto external_owner = std::make_shared<std::vector<std::int64_t>>(
             std::initializer_list<std::int64_t>{101, 102, 103});
 
-    auto external_ids = FlatVector::wrap_external(Type::Int64,
+    auto external_ids = FlatVector::wrap_external(DataType::Int64,
                                                   external_owner->data(),
                                                   external_owner->size(),
                                                   external_owner);
 
-    auto owned_values = FlatVector::create(Type::Float64, 3);
+    auto owned_values = FlatVector::create(DataType::Float64, 3);
     auto *values = FlatVector::get_mutable_data<double>(owned_values);
 
     values[0] = 10.0;
@@ -189,7 +181,7 @@ void test_mixed_owned_and_external_columns()
 void test_move_data_chunk()
 {
     DataChunk source;
-    source.add_column(FlatVector::create(Type::Int64, 4));
+    source.add_column(FlatVector::create(DataType::Int64, 4));
     source.set_row_count(2);
 
     DataChunk destination = std::move(source);
@@ -200,42 +192,6 @@ void test_move_data_chunk()
     validate(source.row_count() == 0, "moved source row count reset");
     succeeded(__func__);
 }
-
-
-// void test_selection_vector()
-// {
-//     SelectionVector sel;
-//
-//     sel.reserve(4);
-//     sel.push_back(3);
-//     sel.push_back(7);
-//     sel.push_back(11);
-//
-//     check(sel.size() == 3, "SelectionVector size");
-//     check(sel[0] == 3, "SelectionVector index 0");
-//     check(sel[1] == 7, "SelectionVector index 1");
-//     check(sel[2] == 11, "SelectionVector index 2");
-//
-//     auto span = sel.as_span();
-//     check(span.size() == 3, "SelectionVector span size");
-//     check(span[2] == 11, "SelectionVector span value");
-//
-//     sel.clear();
-//     check(sel.empty(), "SelectionVector clear");
-// }
-//
-// void test_selection_vector_overflow_throws()
-// {
-//     SelectionVector sel;
-//
-//     bool threw = false;
-//     try {
-//         sel.push_back(static_cast<std::size_t>(U32_MAX) + 1);
-//     } catch (const std::out_of_range&) {
-//         threw = true;
-//     }
-//     check(threw, "SelectionVector add out of range");
-// }
 
 
 } // namespace

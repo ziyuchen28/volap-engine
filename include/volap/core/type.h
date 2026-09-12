@@ -5,7 +5,7 @@
 
 namespace volap::core {
 
-enum class Type 
+enum class DataType 
 {
     Bool8,
     Int64,
@@ -15,20 +15,20 @@ enum class Type
 };
 
 
-inline constexpr std::size_t type_size(Type type) noexcept
+inline constexpr std::size_t data_type_size(DataType type) noexcept
 {
     switch (type) {
-        case Type::Bool8:
+        case DataType::Bool8:
             // vector of std::bool won't work due to compression
             return sizeof(std::uint8_t);
 
-        case Type::Int64:
+        case DataType::Int64:
             return sizeof(std::int64_t);
 
-        case Type::Float32:
+        case DataType::Float32:
             return sizeof(float);
 
-        case Type::Float64:
+        case DataType::Float64:
             return sizeof(double);
     }
     return 0;
@@ -37,33 +37,33 @@ inline constexpr std::size_t type_size(Type type) noexcept
 
 // Zero-overhead translation from compile-time type to runtime enum
 template <typename T>
-struct TypeOf;
+struct DataTypeOf;
 
 template <>
-struct TypeOf<std::uint8_t> {
-    static constexpr Type value = Type::Bool8;
+struct DataTypeOf<std::uint8_t> {
+    static constexpr DataType value = DataType::Bool8;
 };
 
 template <>
-struct TypeOf<std::int64_t> {
-    static constexpr Type value = Type::Int64;
+struct DataTypeOf<std::int64_t> {
+    static constexpr DataType value = DataType::Int64;
 };
 
 template <>
-struct TypeOf<float> {
-    static constexpr Type value = Type::Float32;
+struct DataTypeOf<float> {
+    static constexpr DataType value = DataType::Float32;
 };
 
 template <>
-struct TypeOf<double> {
-    static constexpr Type value = Type::Float64;
+struct DataTypeOf<double> {
+    static constexpr DataType value = DataType::Float64;
 };
 
 
 // Avoid fetching from memory, bake the type enum into instruction.
 // Remove const and volatile
 template <typename T>
-inline constexpr Type type_v = TypeOf<std::remove_cv_t<T>>::value;
+inline constexpr DataType data_type_v = DataTypeOf<std::remove_cv_t<T>>::value;
 
 
 } // namespace volap::core

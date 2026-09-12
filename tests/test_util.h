@@ -52,7 +52,7 @@ inline void succeeded(std::string_view func_name)
 template <typename T>
 inline Vector make_flat_vector(std::initializer_list<T> values)
 {
-    Vector vector = FlatVector::create(type_v<T>, values.size());
+    Vector vector = FlatVector::create(data_type_v<T>, values.size());
 
     T *data = FlatVector::get_mutable_data<T>(vector);
     std::copy(values.begin(), values.end(), data);

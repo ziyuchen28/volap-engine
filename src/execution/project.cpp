@@ -20,62 +20,6 @@ namespace
 
 using namespace volap::kernels;
 
-// Type checked_projection_type(const Projection &projection,
-//                              const DataChunk &input)
-// {
-//     switch (projection.type()) {
-//         case ProjectionType::ColumnRef: {
-//             return input.column(projection.left_column_index()).data_type();
-//         }
-//
-//         case ProjectionType::Multiply: {
-//             const Vector &left = input.column(projection.left_column_index());
-//             const Vector &right = input.column(projection.right_column_index());
-//
-//             // TO DO: handle implicit conversion, for example int64 * float32/64
-//             if (left.data_type() != right.data_type()) {
-//                 throw std::invalid_argument(
-//                     "Project: multiply input types do not match");
-//             }
-//
-//             if (left.data_type() != Type::Float32 &&
-//                 left.data_type() != Type::Float64) {
-//                 throw std::invalid_argument(
-//                     "Project: multiply currently supports only f32/64");
-//             }
-//
-//             return left.data_type();
-//         }
-//     }
-//
-//     throw std::logic_error(
-//         "Project: unsupported projection");
-// }
-//
-
-// std::size_t projection_capacity(const Projection &projection,
-//                                 const DataChunk &input)
-// {
-//     switch (projection.type()) {
-//         case ProjectionType::ColumnRef: 
-//         {
-//             const Vector &column = input.column(projection.left_column_index());
-//             return column.capacity();
-//         }
-//
-//         case ProjectionType::Multiply: 
-//         {
-//             const Vector &left = input.column(projection.left_column_index());
-//             const Vector &right = input.column(projection.right_column_index());
-//             return std::min(left.capacity(), right.capacity());
-//         }
-//     }
-//
-//     throw std::logic_error(
-//         "Project: unsupported projection");
-// }
-//
-
 template <typename T>
 void copy_flat_column(const Vector &input, Vector &output, std::size_t row_count)
 {
@@ -89,23 +33,23 @@ void copy_flat_column(const Vector &input, Vector &output, std::size_t row_count
     std::memcpy(output_buffer, input_data, row_count * sizeof(T));
 }
 
-void copy_column(Type data_type, const Vector &input, Vector &output, std::size_t row_count)
+void copy_column(DataType data_type, const Vector &input, Vector &output, std::size_t row_count)
 {
     switch (data_type) 
     {
-        case Type::Bool8:
+        case DataType::Bool8:
             copy_flat_column<std::uint8_t>(input, output, row_count);
             return;
 
-        case Type::Int64:
+        case DataType::Int64:
             copy_flat_column<std::int64_t>(input, output, row_count);
             return;
 
-        case Type::Float32:
+        case DataType::Float32:
             copy_flat_column<float>(input, output, row_count);
             return;
 
-        case Type::Float64:
+        case DataType::Float64:
             copy_flat_column<double>(input, output, row_count);
             return;
     }
@@ -113,51 +57,6 @@ void copy_column(Type data_type, const Vector &input, Vector &output, std::size_
     throw std::logic_error(
         "Project: unsupported input data type");
 }
-
-// // todo: mixed operand types
-// void multiply_columns(const Vector &left,
-//                       const Vector &right,
-//                       Vector &output,
-//                       std::size_t row_count)
-// {
-//     if (left.data_type() != right.data_type() ||
-//         left.data_type() != output.data_type()) {
-//         throw std::invalid_argument(
-//             "Project: multiply vector types do not match");
-//     }
-//
-//     switch (left.data_type()) 
-//     {
-//         case Type::Float32: 
-//         {
-//             const float *left_data = FlatVector::get_data<float>(left);
-//             const float *right_data = FlatVector::get_data<float>(right);
-//             float *output_data = FlatVector::get_mutable_data<float>(output);
-//
-//             multiply_f32_scalar(left_data, right_data, output_data, row_count);
-//
-//             return;
-//         }
-//         case Type::Float64: 
-//         {
-//             const double *left_data = FlatVector::get_data<double>(left);
-//             const double *right_data = FlatVector::get_data<double>(right);
-//             double *output_data = FlatVector::get_mutable_data<double>(output);
-//
-//             multiply_f64_scalar(left_data, right_data, output_data, row_count);
-//
-//             return;
-//         }
-//         // TO DO
-//         case Type::Bool8:
-//         case Type::Int64:
-//             break;
-//     }
-//
-//     throw std::invalid_argument(
-//         "Project: multiply currently supports only "
-//         "Float32 and Float64");
-// }
 
 } // anonymous namespace
 
@@ -192,28 +91,6 @@ Project::Project(std::vector<Projection> projections,
             "Project: at least one projection is required");
     }
 }
-
-
-// void Project::prepare_output(const DataChunk &input,
-//                              DataChunk &output) const
-// {
-//     if (output.column_count() == 0) {
-//         output.reserve_columns(projections_.size());
-//         for (const Projection &projection : projections_) {
-//             const Type result_type = checked_projection_type(projection, input);
-//             const std::size_t capacity = projection_capacity(projection, input);
-//             output.add_column(FlatVector::create(result_type, capacity));
-//         }
-//         return;
-//     }
-//
-//     if (output.column_count() != projections_.size()) {
-//         throw std::invalid_argument(
-//             "Project: output column count does not match projection count");
-//     }
-//
-//     output.clear();
-// }
 
 std::size_t projection_capacity(const BoundProjection &projection,
                                 const DataChunk &input)
@@ -363,29 +240,6 @@ void Project::execute_projection(const BoundProjection &projection,
     throw std::logic_error(
         "Project: invalid bound projection type");
 }
-
-// void Project::project_output(const Projection &projection,
-//                                   const DataChunk &input,
-//                                   Vector &output) const
-// {
-//     switch (projection.type()) 
-//     {
-//         case ProjectionType::ColumnRef: {
-//             const Vector &column = input.column(projection.left_column_index());
-//             copy_column(column, output, input.row_count());
-//             return;
-//         }
-//         case ProjectionType::Multiply: {
-//             const Vector &left = input.column(projection.left_column_index());
-//             const Vector &right = input.column(projection.right_column_index());
-//             multiply_columns(left, right, output, input.row_count());
-//             return;
-//         }
-//     }
-//
-//     throw std::logic_error(
-//         "Project: unsupported projection");
-// }
 
 void Project::execute(const DataChunk &input, DataChunk &output)
 {

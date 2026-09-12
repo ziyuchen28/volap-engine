@@ -14,9 +14,9 @@ using namespace volap::core;
 
 void test_flat_vector_metadata()
 {
-    auto vector = FlatVector::create(Type::Int64, 8);
+    auto vector = FlatVector::create(DataType::Int64, 8);
 
-    validate(vector.data_type() == Type::Int64, "vector data type");
+    validate(vector.data_type() == DataType::Int64, "vector data type");
     validate(vector.encoding() == VectorEncoding::Flat, "vector encoding");
 
     validate(vector.size() == 0, "vector initial size");
@@ -29,7 +29,7 @@ void test_flat_vector_metadata()
 
 void test_flat_vector_write_and_read()
 {
-    auto vector = FlatVector::create(Type::Int64, 8);
+    auto vector = FlatVector::create(DataType::Int64, 8);
     auto *data_mut = FlatVector::get_mutable_data<std::int64_t>(vector);
 
     data_mut[0] = 10;
@@ -49,7 +49,7 @@ void test_flat_vector_write_and_read()
 
 void test_flat_vector_clear_reuses_allocation()
 {
-    auto vector = FlatVector::create(Type::Float64, 4);
+    auto vector = FlatVector::create(DataType::Float64, 4);
     auto *initial_data = FlatVector::get_mutable_data<double>(vector);
     const double *initial_address = initial_data;
 
@@ -84,7 +84,7 @@ void test_flat_vector_external_raed_access()
     auto owner = std::make_shared<std::vector<std::int64_t>>(
         std::initializer_list<std::int64_t>{10, 20, 30});
 
-    auto vector = FlatVector::wrap_external(volap::core::Type::Int64,
+    auto vector = FlatVector::wrap_external(volap::core::DataType::Int64,
                                             owner->data(),
                                             owner->size(),
                                             owner);
@@ -125,7 +125,7 @@ void test_flat_vector_external_lifetime()
             std::initializer_list<std::int64_t>{10, 20, 30});
 
         weak_owner = owner;
-        auto vector = FlatVector::wrap_external(Type::Int64,
+        auto vector = FlatVector::wrap_external(DataType::Int64,
                                                 owner->data(),
                                                 owner->size(),
                                                 owner);
@@ -144,7 +144,7 @@ void test_flat_vector_external_lifetime()
 
 void test_flat_vector_reference_sharing_buffer()
 {
-    auto original = FlatVector::create(Type::Int64, 4);
+    auto original = FlatVector::create(DataType::Int64, 4);
 
     auto *data = FlatVector::get_mutable_data<std::int64_t>(original);
 

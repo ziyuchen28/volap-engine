@@ -28,10 +28,10 @@ struct BoundOperand final
     std::size_t column_index;
 
     // Actual type of the input Vector.
-    Type source_type;
+    DataType source_type;
 
-    // Type presented to the arithmetic kernel after any cast.
-    Type execution_type;
+    // DataType presented to the arithmetic kernel after any cast.
+    DataType execution_type;
 
     BoundCastType cast;
 };
@@ -49,7 +49,7 @@ struct BoundProjection final
 {
     BoundProjectionType type;
 
-    Type execution_type;
+    DataType execution_type;
 
     BoundOperand left;
 

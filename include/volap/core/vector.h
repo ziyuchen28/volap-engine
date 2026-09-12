@@ -12,9 +12,9 @@ namespace volap::core
 {
 
 
-inline std::size_t checked_bytes_size(Type type, std::size_t row_count)
+inline std::size_t checked_bytes_size(DataType type, std::size_t row_count)
 {
-    const std::size_t size = type_size(type);
+    const std::size_t size = data_type_size(type);
 
     if (size == 0) {
         throw std::invalid_argument("Vector data type has zero physical width");
@@ -26,26 +26,26 @@ inline std::size_t checked_bytes_size(Type type, std::size_t row_count)
     return row_count * size;
 }
 
-inline std::size_t natural_alignment(Type type) noexcept
+inline std::size_t natural_alignment(DataType type) noexcept
 {
     switch (type) 
     {
-        case Type::Bool8:
+        case DataType::Bool8:
             return alignof(std::uint8_t);
 
-        case Type::Int64:
+        case DataType::Int64:
             return alignof(std::int64_t);
 
-        case Type::Float32:
+        case DataType::Float32:
             return alignof(float);
 
-        case Type::Float64:
+        case DataType::Float64:
             return alignof(double);
     }
     return 1;
 }
 
-inline bool satisfies_natural_alignment(const void *data, Type type) noexcept
+inline bool satisfies_natural_alignment(const void *data, DataType type) noexcept
 {
     if (data == nullptr) {
         return true;
@@ -77,7 +77,7 @@ public:
     Vector(Vector&&) noexcept = default;
     Vector& operator=(Vector&&) noexcept = default;
 
-    Type data_type() const noexcept
+    DataType data_type() const noexcept
     {
         return data_type_;
     }
@@ -114,7 +114,7 @@ public:
 
     std::size_t size_bytes() const noexcept
     {
-        return size_ * type_size(data_type_);
+        return size_ * data_type_size(data_type_);
     }
 
     bool empty() const noexcept
@@ -135,7 +135,7 @@ private:
 
     friend struct FlatVector;
 
-    Vector(Type type, 
+    Vector(DataType type, 
            VectorEncoding encoding,
            std::size_t size, 
            std::size_t capacity, 
@@ -149,9 +149,9 @@ private:
 
     void validate_encoding(VectorEncoding requested_encoding) const;
 
-    void validate_data_type(Type requested_type) const;
+    void validate_data_type(DataType requested_type) const;
 
-    Type data_type_;
+    DataType data_type_;
     VectorEncoding encoding_;
 
     std::size_t size_;

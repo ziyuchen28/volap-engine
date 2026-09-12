@@ -23,7 +23,7 @@ namespace
 template <typename T>
 Vector make_vector(std::size_t row_count)
 {
-    return FlatVector::create(type_v<T>, row_count);
+    return FlatVector::create(data_type_v<T>, row_count);
 }
 
 DataChunk make_source(std::size_t row_count)

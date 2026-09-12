@@ -37,18 +37,18 @@ void copy_selected_column(const Vector &input,
                           Vector &output)
 {
     switch (input.data_type()) {
-        case Type::Bool8:
+        case DataType::Bool8:
             copy_selected_rows<std::uint8_t>(input, selection, output);
             return;
 
-        case Type::Int64:
+        case DataType::Int64:
             copy_selected_rows<std::int64_t>(input, selection, output);
             return;
-        case Type::Float32:
+        case DataType::Float32:
             copy_selected_rows<float>(input, selection, output);
             return;
 
-        case Type::Float64:
+        case DataType::Float64:
             copy_selected_rows<double>(input, selection, output);
             return;
     }
@@ -60,8 +60,7 @@ void copy_selected_column(const Vector &input,
 Filter::Filter(std::size_t column_index, Threshold threshold) 
              : column_id_(column_index), 
                threshold_(std::move(threshold))
-{
-}
+{}
 
 Filter Filter::i64_greater_than(std::size_t column_index,
                                 std::int64_t threshold)

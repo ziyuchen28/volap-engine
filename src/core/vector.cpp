@@ -28,7 +28,7 @@ void Vector::validate_encoding(VectorEncoding requested_encoding) const
 }
 
 
-void Vector::validate_data_type(Type requested_type) const
+void Vector::validate_data_type(DataType requested_type) const
 {
     if (data_type_ != requested_type) {
         throw std::logic_error(

@@ -10,23 +10,23 @@ namespace
 {
 
 using volap::core::DataSchema;
-using volap::core::Type;
+using volap::core::DataType;
 
 BoundOperand bind_column(std::size_t column_index,
-                         Type execution_type,
+                         DataType execution_type,
                          const DataSchema &schema)
 {
-    const Type source_type = schema.column_type(column_index);
+    const DataType source_type = schema.column_type(column_index);
 
     BoundCastType cast = BoundCastType::None;
 
     if (source_type != execution_type) 
     {
-        if (source_type == Type::Int64 && execution_type == Type::Float32) {
+        if (source_type == DataType::Int64 && execution_type == DataType::Float32) {
             cast = BoundCastType::Int64ToFloat32;
-        } else if (source_type == Type::Int64 && execution_type == Type::Float64) {
+        } else if (source_type == DataType::Int64 && execution_type == DataType::Float64) {
             cast = BoundCastType::Int64ToFloat64;
-        } else if (source_type == Type::Float32 && execution_type == Type::Float64) {
+        } else if (source_type == DataType::Float32 && execution_type == DataType::Float64) {
             cast = BoundCastType::Float32ToFloat64;
         } else {
             throw std::invalid_argument(
@@ -47,7 +47,7 @@ BoundProjection bind_column_ref(const Projection &expression,
                                 const DataSchema &schema)
 {
     const std::size_t column_index = expression.left_column_index();
-    const Type type = schema.column_type(column_index);
+    const DataType type = schema.column_type(column_index);
 
     return BoundProjection {
         BoundProjectionType::ColumnRef,
@@ -62,14 +62,14 @@ BoundProjection bind_column_ref(const Projection &expression,
     };
 }
 
-Type resolve_multiply_type(Type left, Type right)
+DataType resolve_multiply_type(DataType left, DataType right)
 {
-    if (left == Type::Float64 || right == Type::Float64) {
-        return Type::Float64;
+    if (left == DataType::Float64 || right == DataType::Float64) {
+        return DataType::Float64;
     }
 
-    if (left == Type::Float32 || right == Type::Float32) {
-        return Type::Float32;
+    if (left == DataType::Float32 || right == DataType::Float32) {
+        return DataType::Float32;
     }
 
     throw std::invalid_argument(
@@ -83,19 +83,19 @@ BoundProjection bind_multiply(const Projection &expression,
     const std::size_t left_index = expression.left_column_index();
     const std::size_t right_index = expression.right_column_index();
 
-    const Type left_type = schema.column_type(left_index);
-    const Type right_type = schema.column_type(right_index);
+    const DataType left_type = schema.column_type(left_index);
+    const DataType right_type = schema.column_type(right_index);
 
-    const Type execution_type = resolve_multiply_type(left_type, right_type);
+    const DataType execution_type = resolve_multiply_type(left_type, right_type);
 
     BoundProjectionType bound_type;
 
     switch (execution_type) {
-        case Type::Float32:
+        case DataType::Float32:
             bound_type = BoundProjectionType::MultiplyFloat32;
             break;
 
-        case Type::Float64:
+        case DataType::Float64:
             bound_type = BoundProjectionType::MultiplyFloat64;
             break;
 
