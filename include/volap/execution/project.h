@@ -1,10 +1,11 @@
 
 #pragma once
 
-#include "volap/execution/projection.h"
+#include "volap/execution/bound_projection.h"
 #include "volap/core/data_chunk.h"
 
 #include <vector>
+#include <optional>
 
 namespace volap::execution
 {
@@ -16,24 +17,38 @@ class Project
 
 public:
 
-    Project(std::vector<Projection> projections);
+    Project(std::vector<BoundProjection> projections);
 
-    Project(std::initializer_list<Projection> projections);
+    Project(std::initializer_list<BoundProjection> projections);
 
-    void execute(const DataChunk &input,
-                 DataChunk &output) const;
+    Project(std::vector<Projection>, const DataSchema &);
+
+    void execute(const DataChunk &input, DataChunk &output);
 
 private:
 
+    // Temporary buffer used for casting data from source type to execution type
+    // during projections for mixed type columns that are castable.
+    struct ProjectionScratch final
+    {
+        std::optional<Vector> left;
+        std::optional<Vector> right;
+    };
 
     void prepare_output(const DataChunk &input,
                         DataChunk &output) const;
 
-    void project_output(const Projection &projection,
-                        const DataChunk &input,
-                        Vector &output) const;
+     const Vector &prepare_operand(const BoundOperand &operand,
+                            std::optional<Vector> &scratch,
+                            const DataChunk &input);
 
-    std::vector<Projection> projections_;
+    void execute_projection(const BoundProjection &projection,
+                            ProjectionScratch &scratch,
+                            const DataChunk &input,
+                            Vector &output);
+
+    std::vector<BoundProjection> projections_;
+    std::vector<ProjectionScratch> scratch_;
 
 };
 

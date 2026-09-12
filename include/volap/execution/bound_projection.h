@@ -13,6 +13,7 @@ namespace volap::execution
 
 using namespace volap::core; 
 
+// TODO: casting bool8? 
 enum class BoundCastType : std::uint8_t
 {
     None,
@@ -21,6 +22,7 @@ enum class BoundCastType : std::uint8_t
     Float32ToFloat64
 };
 
+// An expression to represent the lhs or rhs on the projection
 struct BoundOperand final
 {
     std::size_t column_index;
@@ -42,12 +44,12 @@ enum class BoundProjectionType : std::uint8_t
     MultiplyFloat64
 };
 
-// As opposed to raw projection, bound projection owns the type and type casting of columns
+// A BoundProjection is essentially Projection that binds data schema,
 struct BoundProjection final
 {
     BoundProjectionType type;
 
-    Type result_type;
+    Type execution_type;
 
     BoundOperand left;
 

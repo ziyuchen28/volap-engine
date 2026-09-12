@@ -4,16 +4,12 @@
 namespace volap::core
 {
 
-
+// This only allocates memory
 Vector FlatVector::create(Type type, std::size_t row_count)
 {
     const std::size_t bytes = checked_bytes_size(type, row_count);
 
-    return Vector(type,
-                  VectorEncoding::Flat,
-                  0,
-                  row_count,
-                  Buffer::allocate(bytes));
+    return Vector(type, VectorEncoding::Flat, 0, row_count, Buffer::allocate(bytes));
 }
 
 Vector FlatVector::wrap_external(

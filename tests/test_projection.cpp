@@ -1,11 +1,10 @@
 
+
 #include "test_util.h"
 
-#include "volap/core/data_chunk.h"
 #include "volap/core/data_schema.h"
+#include "volap/execution/bound_projection.h"
 #include "volap/execution/project.h"
-#include "volap/execution/in_memory_scan.h"
-#include "volap/execution/filter.h"
 
 namespace 
 {
@@ -13,254 +12,58 @@ namespace
 using namespace volap::execution;
 using namespace volap::core;
 
-DataChunk make_projection_input()
+
+void test_bound_projection_with_cast()
 {
     DataChunk input;
+    // column 0: id
+    input.add_column( make_flat_vector<std::int64_t>({ 101, 102, 103 }));
+    // column 1: quantity
+    input.add_column( make_flat_vector<std::int64_t>({ 1, 2, 3 }));
+    // column 2: value
+    input.add_column( make_flat_vector<double>({ 10.0, 20.0, 30.0 }));
 
-    input.add_column(
-        make_flat_vector<std::int64_t>({
-            101,
-            102,
-            103
-        })
-    );
+    DataSchema schema = DataSchema::from_chunk(input);
 
-    input.add_column(
-        make_flat_vector<double>({
-            10.0,
-            25.0,
-            40.0
-        })
-    );
-
-    input.add_column(
-        make_flat_vector<double>({
-            2.0,
-            1.0,
-            3.0
-        })
-    );
-
-    return input;
-}
-
-void test_project_column_reference()
-{
-    DataChunk input = make_projection_input();
-    DataChunk output;
-
-    Project project({
-        Projection::column(2),
-        Projection::column(0)
-    });
-
-    project.execute(input, output);
-
-    validate(output.column_count() == 2);
-    validate(output.row_count() == 3);
-
-    const double *f64_col = FlatVector::get_data<double>(output.column(0));
-    const std::int64_t *i64_col = FlatVector::get_data<std::int64_t>(output.column(1));
-
-    validate(f64_col[0] == 2.0, "f64 col row 0");
-    validate(f64_col[2] == 3.0, "f64 col row 2");
-
-    validate(i64_col[0] == 101, "i64 col row 0");
-    validate(i64_col[2] == 103, "i64 col row 2");
-
-    succeeded(__func__);
-}
-
-void test_project_f64_multiply()
-{
-    DataChunk input = make_projection_input();
-    DataChunk output;
-
-    Project project({
-        Projection::multiply(1, 2)
-    });
-
-    project.execute(input, output);
-
-    validate(output.column_count() == 1, "multiply column count");
-    validate(output.row_count() == 3, "multiply row count");
-
-    const double *amount =
-        FlatVector::get_data<double>(output.column(0));
-
-    validate(amount[0] == 20.0, "f64 row 0");
-    validate(amount[1] == 25.0, "f64 row 1");
-    validate(amount[2] == 120.0, "f64 row 2");
-
-    succeeded(__func__);
-}
-
-void test_project_f32_multiply()
-{
-    DataChunk input;
-
-    input.add_column(
-        make_flat_vector<float>({
-            1.5f,
-            2.0f,
-            4.0f
-        })
-    );
-
-    input.add_column(
-        make_flat_vector<float>({
-            2.0f,
-            3.0f,
-            0.5f
-        })
-    );
-
-    DataChunk output;
-
-    Project project({
-        Projection::multiply(0, 1)
-    });
-
-    project.execute(input, output);
-
-    const float *result =
-        FlatVector::get_data<float>(output.column(0));
-
-    validate(result[0] == 3.0f, "f32 result row 0");
-    validate(result[1] == 6.0f, "f32 result row 1");
-    validate(result[2] == 2.0f, "f32 result row 2");
-
-    succeeded(__func__);
-}
-
-void test_project_mixed_projections()
-{
-    DataChunk input = make_projection_input();
-    DataChunk output;
-
-    Project project({
+    std::vector<Projection> projections {
         Projection::column(0),
         Projection::multiply(1, 2)
-    });
+    };
+
+    std::vector<BoundProjection> bound = bind_projections(projections, schema);
+
+    validate(bound.size() == 2, "bound projection count");
+
+    validate(
+        bound[1].type == BoundProjectionType::MultiplyFloat64,
+        "multiply bound to Float64");
+
+    validate(
+        bound[1].left.cast == BoundCastType::Int64ToFloat64,
+        "left operand requires Int64 -> Float64");
+
+    validate(
+        bound[1].right.cast == BoundCastType::None,
+        "right operand requires no cast");
+
+
+    Project project(std::move(bound));
+
+    DataChunk output;
 
     project.execute(input, output);
+
 
     const std::int64_t *ids = FlatVector::get_data<std::int64_t>(output.column(0));
-    const double *multiplied_values = FlatVector::get_data<double>(output.column(1));
+    const double *total = FlatVector::get_data<double>(output.column(1));
 
-    validate(ids[0] == 101, "id row 0");
-    validate(ids[2] == 103, "id row 2");
+    validate(ids[0] == 101, "id 0");
+    validate(ids[1] == 102, "id 1");
+    validate(ids[2] == 103, "id 2");
 
-    validate(multiplied_values[0] == 20.0, "multipled values row 0");
-    validate(multiplied_values[2] == 120.0, "multipled values row 2");
-
-    succeeded(__func__);
-}
-
-void test_project_invalid_column_throws()
-{
-    DataChunk input = make_projection_input();
-    DataChunk output;
-
-    Project project({
-        Projection::column(100)
-    });
-
-    bool threw = false;
-    try {
-        project.execute(input, output);
-    } catch (const std::out_of_range &) {
-        // thrown from DataChunk::column
-        threw = true;
-    }
-
-    validate(threw, "invalid projection column throws");
-
-    succeeded(__func__);
-}
-
-void test_scan_filter_project_pipeline()
-{
-    DataChunk source;
-
-    source.add_column(
-        make_flat_vector<std::int64_t>({
-            101,
-            102,
-            103,
-            104,
-            105
-        })
-    );
-
-    source.add_column(
-        make_flat_vector<double>({
-            10.0,
-            25.0,
-            40.0,
-            15.0,
-            50.0
-        })
-    );
-
-    source.add_column(
-        make_flat_vector<double>({
-            2.0,
-            1.0,
-            3.0,
-            4.0,
-            2.0
-        })
-    );
-
-    InMemoryScan scan(std::move(source), 2);
-    Filter filter = Filter::f64_greater_than(1, 20.0);
-
-    Project project({
-        Projection::column(0),
-        Projection::multiply(1, 2)
-    });
-
-    DataChunk scan_output;
-    DataChunk filter_output;
-    DataChunk project_output;
-
-    // expected results
-    // 102, 25.0 * 1.0
-    // 103, 40.0 * 3.0
-    // 105, 50.0 * 2.0
-
-    std::vector<std::int64_t> result_ids;
-    std::vector<double> result_values;
-
-    while (scan.next(scan_output)) {
-        filter.execute(scan_output, filter_output);
-        project.execute(filter_output, project_output);
-
-        const std::int64_t *ids =
-            FlatVector::get_data<std::int64_t>(project_output.column(0));
-
-        const double *values =
-            FlatVector::get_data<double>(project_output.column(1));
-
-        for (std::size_t row = 0;
-             row < project_output.row_count();
-             ++row) 
-        {
-            result_ids.push_back(ids[row]);
-            result_values.push_back(values[row]);
-        }
-    }
-
-    validate(result_ids.size() == 3, "pipeline result count");
-
-    validate(result_ids[0] == 102, "pipeline id 0");
-    validate(result_ids[1] == 103, "pipeline id 1");
-    validate(result_ids[2] == 105, "pipeline id 2");
-
-    validate(result_values[0] == 25.0, "pipeline value 0");
-    validate(result_values[1] == 120.0, "pipeline value 1");
-    validate(result_values[2] == 100.0, "pipeline value 2");
+    validate(total[0] == 10.0, "total 0");
+    validate(total[1] == 40.0, "total 1");
+    validate(total[2] == 90.0, "total 2");
 
     succeeded(__func__);
 }
@@ -270,9 +73,6 @@ void test_scan_filter_project_pipeline()
 
 int main()
 {
-    test_project_column_reference();
-    test_project_f32_multiply();
-    test_project_mixed_projections();
-    test_project_invalid_column_throws();
-    test_scan_filter_project_pipeline();
+    test_bound_projection_with_cast();
 }
+

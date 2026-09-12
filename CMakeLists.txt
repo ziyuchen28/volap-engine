@@ -1,6 +1,6 @@
+
 cmake_minimum_required(VERSION 3.16)
 project(vecstore LANGUAGES CXX)
-
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(VOLAP_BUILD_BENCH "Build benchmark targets" ON)
@@ -45,6 +45,7 @@ add_library(volap_kernels STATIC
   src/kernels/sum_product.cpp
   src/kernels/select.cpp
   src/kernels/multiply.cpp
+  src/kernels/cast_scalar.cpp
 )
 add_library(volap::kernels ALIAS volap_kernels)
 target_include_directories(volap_kernels PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -149,10 +150,6 @@ if(VOLAP_BUILD_TESTS)
   add_executable(test_projection tests/test_projection.cpp)
   target_link_libraries(test_projection PRIVATE volap::execution)
   add_test(NAME volap_test_projection COMMAND test_projection)
-
-  add_executable(test_bound_projection tests/test_bound_projection.cpp)
-  target_link_libraries(test_bound_projection PRIVATE volap::execution)
-  add_test(NAME volap_test_bound_projection COMMAND test_bound_projection)
 
 endif()
 

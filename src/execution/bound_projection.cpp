@@ -43,20 +43,6 @@ BoundOperand bind_column(std::size_t column_index,
     };
 }
 
-Type resolve_multiply_type(Type left, Type right)
-{
-    if (left == Type::Float64 || right == Type::Float64) {
-        return Type::Float64;
-    }
-
-    if (left == Type::Float32 || right == Type::Float32) {
-        return Type::Float32;
-    }
-
-    throw std::invalid_argument(
-        "Unsupported multiply operand types");
-}
-
 BoundProjection bind_column_ref(const Projection &expression,
                                 const DataSchema &schema)
 {
@@ -76,6 +62,21 @@ BoundProjection bind_column_ref(const Projection &expression,
     };
 }
 
+Type resolve_multiply_type(Type left, Type right)
+{
+    if (left == Type::Float64 || right == Type::Float64) {
+        return Type::Float64;
+    }
+
+    if (left == Type::Float32 || right == Type::Float32) {
+        return Type::Float32;
+    }
+
+    throw std::invalid_argument(
+        "Unsupported multiply operand types");
+}
+
+// Resolve exectuion type based on types from left and right sides
 BoundProjection bind_multiply(const Projection &expression, 
                               const DataSchema &schema)
 {
@@ -135,3 +136,4 @@ std::vector<BoundProjection> bind_projections(const std::vector<Projection> &pro
 }
 
 } // namespace volap::execution
+

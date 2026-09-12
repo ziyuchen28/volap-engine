@@ -9,6 +9,8 @@
 
 namespace volap::core {
 
+// To avoid repeated type checking during data pipeline we should
+// keep track of the data schema
 class DataSchema final
 {
 public:

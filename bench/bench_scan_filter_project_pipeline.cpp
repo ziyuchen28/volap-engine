@@ -69,7 +69,7 @@ struct RunResult
 
 RunResult run_pipeline(InMemoryScan &scan,
                        Filter &filter,
-                       const Project &project,
+                       Project &project,
                        DataChunk &scan_output,
                        DataChunk &filter_output,
                        DataChunk &project_output)
@@ -126,6 +126,7 @@ int main(int argc, char **argv)
     std::cout << "threshold: " << threshold << '\n';
 
     DataChunk source = make_source(rows);
+    DataSchema schema = DataSchema::from_chunk(source);
 
     InMemoryScan scan(std::move(source), chunk_size);
     Filter filter = Filter::f64_greater_than(1, threshold);
@@ -133,7 +134,7 @@ int main(int argc, char **argv)
     Project project({
         Projection::column(0),
         Projection::multiply(1, 2)
-    });
+    }, schema);
 
     DataChunk scan_output;
     DataChunk filter_output;
