@@ -59,6 +59,18 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     src/kernels/sum_product_scalar.cpp 
     PROPERTIES
     COMPILE_OPTIONS "-fno-tree-vectorize")
+  set_source_files_properties(
+    src/kernels/multiply.cpp 
+    PROPERTIES
+    COMPILE_OPTIONS "-fno-tree-vectorize")
+  set_source_files_properties(
+    src/kernels/cast_scalar.cpp 
+    PROPERTIES
+    COMPILE_OPTIONS "-fno-tree-vectorize")
+  set_source_files_properties(
+    src/kernels/select.cpp 
+    PROPERTIES
+    COMPILE_OPTIONS "-fno-tree-vectorize")
 endif()
 
 

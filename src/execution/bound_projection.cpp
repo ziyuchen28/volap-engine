@@ -114,6 +114,7 @@ BoundProjection bind_multiply(const Projection &expression,
 
 } // namespace
 
+// TODO interate over index to reduce pointer redirect
 std::vector<BoundProjection> bind_projections(const std::vector<Projection> &projections,
                                               const DataSchema &schema)
 {
